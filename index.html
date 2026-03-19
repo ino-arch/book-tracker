@@ -713,21 +713,71 @@ function renderModalContent(b){
           ${b.pages?`<div class="mi">ページ数 <span class="mv">${b.pages.toLocaleString()}</span></div>`:''}
           ${b.price?`<div class="mi">価格 <span class="mv">¥${b.price.toLocaleString()}</span></div>`:''}
           ${b.genre?`<div class="mi">ジャンル <span class="mv">${b.genre}</span></div>`:''}
-          ${b.rating>0?`<div class="mi">評価 <span class="mv" style="color:var(--accent);">${'★'.repeat(b.rating)}</span></div>`:''}
         </div>
       </div>
     </div>
     <div class="mtabs">
-      <button class="mtab ${activeModalTab==='info'?'active':''}" onclick="switchMTab('info',${b.id})">詳細</button>
+      <button class="mtab ${activeModalTab==='info'?'active':''}" onclick="switchMTab('info',${b.id})">詳細・編集</button>
       <button class="mtab ${activeModalTab==='hl'?'active':''}" onclick="switchMTab('hl',${b.id})">メモ・ハイライト <span style="font-size:11px;color:var(--muted);">(${b.highlights.length})</span></button>
     </div>
     <div class="mtab-panel ${activeModalTab==='info'?'active':''}" id="mp-info">
-      ${b.start||b.done?`<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:.75rem;">
-        ${b.start?`<div class="mi">開始日 <span class="mv">${b.start}</span></div>`:''}
-        ${b.done?`<div class="mi">読了日 <span class="mv">${b.done}</span></div>`:''}
-      </div>`:''}
-      ${b.status==='reading'?`<div style="margin-bottom:.75rem;"><div class="prog-bar" style="height:5px;"><div class="prog-fill" style="width:${b.progress}%"></div></div><div class="prog-lbl">${b.progress}% 読了</div></div>`:''}
-      ${b.review?`<div style="font-size:13px;color:var(--muted);font-style:italic;border-left:2px solid var(--border2);padding-left:12px;">${b.review}</div>`:'<div style="font-size:13px;color:var(--muted2);">レビューはまだありません。</div>'}
+
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:1rem;">
+
+        <div>
+          <div class="fl" style="margin-bottom:5px;">ステータス</div>
+          <div style="display:flex;gap:6px;">
+            ${['want','reading','done'].map(s=>`
+              <button onclick="updateBook(${b.id},'status','${s}')"
+                style="flex:1;padding:6px 0;border-radius:var(--rs);border:1px solid ${b.status===s?'var(--border2)':'var(--border)'};
+                background:${b.status===s?(s==='reading'?'rgba(91,155,213,.2)':s==='done'?'rgba(126,200,160,.2)':'rgba(160,126,208,.2)'):'var(--surface2)'};
+                color:${b.status===s?(s==='reading'?'var(--reading)':s==='done'?'var(--done)':'var(--want)'):'var(--muted)'};
+                font-family:var(--fb);font-size:12px;font-weight:500;cursor:pointer;transition:all .18s;">
+                ${sM[s]}
+              </button>`).join('')}
+          </div>
+        </div>
+
+        ${b.status==='reading'?`
+        <div>
+          <div class="fl" style="margin-bottom:5px;">進捗 (${b.progress}%)</div>
+          <input type="range" min="0" max="100" value="${b.progress}"
+            oninput="this.previousElementSibling.textContent='進捗 (' + this.value + '%)';updateBook(${b.id},'progress',parseInt(this.value))"
+            style="width:100%;accent-color:var(--reading);">
+        </div>`:''}
+
+        <div>
+          <div class="fl" style="margin-bottom:5px;">評価</div>
+          <div style="display:flex;gap:4px;">
+            ${[1,2,3,4,5].map(n=>`
+              <button onclick="updateBook(${b.id},'rating',${n})"
+                style="font-size:20px;background:none;border:none;cursor:pointer;padding:0;color:${n<=b.rating?'var(--accent3)':'var(--surface3)'};transition:transform .1s;"
+                onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">★</button>`).join('')}
+            ${b.rating>0?`<button onclick="updateBook(${b.id},'rating',0)" style="font-size:11px;background:none;border:none;cursor:pointer;color:var(--muted);padding:0 4px;">リセット</button>`:''}
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div>
+            <div class="fl" style="margin-bottom:5px;">開始日</div>
+            <input type="date" class="fi" value="${b.start||''}" style="font-size:13px;padding:7px 10px;color-scheme:dark;"
+              onchange="updateBook(${b.id},'start',this.value)">
+          </div>
+          <div>
+            <div class="fl" style="margin-bottom:5px;">読了日</div>
+            <input type="date" class="fi" value="${b.done||''}" style="font-size:13px;padding:7px 10px;color-scheme:dark;"
+              onchange="updateBook(${b.id},'done',this.value)">
+          </div>
+        </div>
+
+        ${b.review!==undefined?`
+        <div>
+          <div class="fl" style="margin-bottom:5px;">レビュー・メモ</div>
+          <textarea class="fta" style="min-height:60px;font-size:13px;" onchange="updateBook(${b.id},'review',this.value)">${b.review||''}</textarea>
+        </div>`:''}
+
+      </div>
+
       <button class="delete-btn" onclick="deleteBook(${b.id})">この本を削除する</button>
     </div>
     <div class="mtab-panel ${activeModalTab==='hl'?'active':''}" id="mp-hl">
@@ -738,6 +788,13 @@ function renderModalContent(b){
 function switchMTab(tab,id){
   activeModalTab=tab;
   const b=books.find(x=>x.id===id);if(b)renderModalContent(b);
+}
+function updateBook(id,field,value){
+  const b=books.find(x=>x.id===id);if(!b)return;
+  b[field]=value;
+  saveData();
+  renderModalContent(b);
+  renderBooks();
 }
 function renderHighlights(b){
   const list=b.highlights.length
