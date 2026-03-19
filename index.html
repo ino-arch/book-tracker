@@ -479,20 +479,57 @@ async function initData(){
   loadSampleCovers();
 }
 
-// ── GOOGLE BOOKS ──
+// ── OPEN LIBRARY API（制限なし・無料）──
 async function fetchCoverUrl(q){
   try{
     const isISBN=/^\d{10,13}$/.test(q.replace(/-/g,''));
-    const qe=isISBN?'isbn:'+q.replace(/-/g,''):encodeURIComponent(q);
-    const res=await fetch('https://www.googleapis.com/books/v1/volumes?q='+qe+'&maxResults=1');
-    const data=await res.json();
-    if(data.items&&data.items[0]){
-      const info=data.items[0].volumeInfo;
-      const links=info.imageLinks;
-      const thumb=links?(links.thumbnail||links.smallThumbnail):null;
-      return{cover:thumb?thumb.replace('http://','https://'):null,title:info.title,authors:info.authors,pages:info.pageCount};
+    if(isISBN){
+      // ISBN検索
+      const isbn=q.replace(/-/g,'');
+      const res=await fetch(`https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&format=json&jscmd=data`);
+      const data=await res.json();
+      const key=`ISBN:${isbn}`;
+      if(data[key]){
+        const info=data[key];
+        const cover=info.cover?info.cover.large||info.cover.medium||info.cover.small:null;
+        return{
+          cover,
+          title:info.title,
+          authors:info.authors?info.authors.map(a=>a.name):null,
+          pages:info.number_of_pages
+        };
+      }
+    } else {
+      // タイトル検索
+      const res=await fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=1&lang=jpn`);
+      const data=await res.json();
+      if(data.docs&&data.docs[0]){
+        const doc=data.docs[0];
+        const coverId=doc.cover_i;
+        const cover=coverId?`https://covers.openlibrary.org/b/id/${coverId}-L.jpg`:null;
+        return{
+          cover,
+          title:doc.title,
+          authors:doc.author_name||null,
+          pages:doc.number_of_pages_median||null
+        };
+      }
+      // 日本語で見つからなければ英語でも検索
+      const res2=await fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=1`);
+      const data2=await res2.json();
+      if(data2.docs&&data2.docs[0]){
+        const doc=data2.docs[0];
+        const coverId=doc.cover_i;
+        const cover=coverId?`https://covers.openlibrary.org/b/id/${coverId}-L.jpg`:null;
+        return{
+          cover,
+          title:doc.title,
+          authors:doc.author_name||null,
+          pages:doc.number_of_pages_median||null
+        };
+      }
     }
-  }catch(e){}
+  }catch(e){console.warn('Open Library error:',e);}
   return null;
 }
 
