@@ -479,57 +479,59 @@ async function initData(){
   loadSampleCovers();
 }
 
-// ── OPEN LIBRARY API（制限なし・無料）──
+// ── 書籍検索API（国立国会図書館 + Open Library）──
 async function fetchCoverUrl(q){
   try{
     const isISBN=/^\d{10,13}$/.test(q.replace(/-/g,''));
+
+    // ① 国立国会図書館APIで検索（日本語の本に強い）
+    const ndlQuery=isISBN
+      ?`isbn=${q.replace(/-/g,'')}`
+      :`title=${encodeURIComponent(q)}`;
+    const ndlRes=await fetch(`https://ndlsearch.ndl.go.jp/api/opensearch?${ndlQuery}&cnt=1`);
+    const ndlText=await ndlRes.text();
+    const parser=new DOMParser();
+    const xml=parser.parseFromString(ndlText,'text/xml');
+    const item=xml.querySelector('item');
+    if(item){
+      const title=item.querySelector('title')?.textContent||'';
+      const author=item.querySelector('author')?.textContent||'';
+      // NDLはISBNを返すので表紙をOpen Libraryから取得
+      const isbnEl=[...xml.querySelectorAll('identifier')].find(el=>el.getAttribute('type')==='dcndl:ISBN');
+      const isbn=isbnEl?.textContent?.replace(/-/g,'');
+      let cover=null;
+      if(isbn){
+        cover=`https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg`;
+      }
+      return{
+        cover,
+        title:title.replace(/\s*\/.*$/,'').trim(),
+        authors:author?[author]:null,
+        pages:null
+      };
+    }
+
+    // ② Open Library（英語の本向け）
+    const olQuery=isISBN
+      ?`https://openlibrary.org/api/books?bibkeys=ISBN:${q.replace(/-/g,'')}&format=json&jscmd=data`
+      :`https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=1`;
+    const olRes=await fetch(olQuery);
+    const olData=await olRes.json();
     if(isISBN){
-      // ISBN検索
-      const isbn=q.replace(/-/g,'');
-      const res=await fetch(`https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&format=json&jscmd=data`);
-      const data=await res.json();
-      const key=`ISBN:${isbn}`;
-      if(data[key]){
-        const info=data[key];
-        const cover=info.cover?info.cover.large||info.cover.medium||info.cover.small:null;
-        return{
-          cover,
-          title:info.title,
-          authors:info.authors?info.authors.map(a=>a.name):null,
-          pages:info.number_of_pages
-        };
+      const key=`ISBN:${q.replace(/-/g,'')}`;
+      if(olData[key]){
+        const info=olData[key];
+        const cover=info.cover?info.cover.large||info.cover.medium:null;
+        return{cover,title:info.title,authors:info.authors?.map(a=>a.name)||null,pages:info.number_of_pages||null};
       }
     } else {
-      // タイトル検索
-      const res=await fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=1&lang=jpn`);
-      const data=await res.json();
-      if(data.docs&&data.docs[0]){
-        const doc=data.docs[0];
-        const coverId=doc.cover_i;
-        const cover=coverId?`https://covers.openlibrary.org/b/id/${coverId}-L.jpg`:null;
-        return{
-          cover,
-          title:doc.title,
-          authors:doc.author_name||null,
-          pages:doc.number_of_pages_median||null
-        };
-      }
-      // 日本語で見つからなければ英語でも検索
-      const res2=await fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=1`);
-      const data2=await res2.json();
-      if(data2.docs&&data2.docs[0]){
-        const doc=data2.docs[0];
-        const coverId=doc.cover_i;
-        const cover=coverId?`https://covers.openlibrary.org/b/id/${coverId}-L.jpg`:null;
-        return{
-          cover,
-          title:doc.title,
-          authors:doc.author_name||null,
-          pages:doc.number_of_pages_median||null
-        };
+      if(olData.docs&&olData.docs[0]){
+        const doc=olData.docs[0];
+        const cover=doc.cover_i?`https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg`:null;
+        return{cover,title:doc.title,authors:doc.author_name||null,pages:doc.number_of_pages_median||null};
       }
     }
-  }catch(e){console.warn('Open Library error:',e);}
+  }catch(e){console.warn('検索エラー:',e);}
   return null;
 }
 
