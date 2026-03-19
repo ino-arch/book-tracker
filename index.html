@@ -3,1000 +3,841 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Book Tracker — 読書管理</title>
+<title>論文管理</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap');
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
-  --bg:#0a0f14;--surface:#111820;--surface2:#182030;--surface3:#1e2a3a;
-  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.14);
-  --text:#e8edf2;--muted:#6a7a8a;--muted2:#3a4a5a;
-  --accent:#5b9bd5;--accent2:#7ec8a0;--accent3:#c8a96e;
-  --danger:#cf7070;--want:#a07ed0;--reading:#5b9bd5;--done:#7ec8a0;
-  --fd:'Cormorant Garamond',serif;--fb:'DM Sans',sans-serif;
-  --r:12px;--rs:8px;
+  --bg0:#0d0d0f;--bg1:#141418;--bg2:#1c1c22;--bg3:#242429;--bg4:#2e2e35;
+  --border:#2e2e38;--border2:#3a3a44;
+  --text1:#f0f0f2;--text2:#a0a0b0;--text3:#606070;
+  --accent:#6ee7b7;--accent2:#34d399;--accent-dim:#1a3d30;
+  --orange:#fb923c;--orange-dim:#3d1f0a;
+  --blue:#60a5fa;--blue-dim:#1a2a3d;
+  --red:#f87171;--red-dim:#3d1a1a;
+  --yellow:#fbbf24;--yellow-dim:#3d2e0a;
+  --purple:#a78bfa;--purple-dim:#2a1a3d;
+  --radius:8px;--radius-lg:12px;
 }
-body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg0);color:var(--text1);font-size:13px;line-height:1.5;min-height:100vh}
+code,pre{font-family:'JetBrains Mono',monospace}
 
-/* LAYOUT */
-.app{display:flex;flex-direction:column;min-height:100vh;}
-.header{padding:1.25rem 2rem 1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--bg);z-index:100;gap:12px;flex-wrap:wrap;}
-.logo{font-family:var(--fd);font-size:1.5rem;letter-spacing:.04em;flex-shrink:0;display:flex;align-items:baseline;gap:6px;}
-.logo-book{color:var(--text);font-weight:600;}
-.logo-tracker{color:var(--accent);font-weight:400;font-style:italic;}
-.nav-tabs{display:flex;gap:3px;background:var(--surface);border-radius:100px;padding:4px;border:1px solid var(--border);}
-.nav-tab{padding:5px 14px;border-radius:100px;border:none;background:transparent;color:var(--muted);cursor:pointer;font-family:var(--fb);font-size:13px;transition:all .18s;white-space:nowrap;}
-.nav-tab.active{background:var(--surface3);color:var(--text);font-weight:500;}
-.nav-tab:hover:not(.active){color:var(--text);}
-.main{flex:1;padding:1.75rem 2rem;max-width:1020px;margin:0 auto;width:100%;}
-.section{display:none;}.section.active{display:block;}
+/* SETUP */
+.setup-screen{display:flex;align-items:center;justify-content:center;min-height:100vh}
+.setup-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:32px;max-width:400px;width:90%;text-align:center}
+.setup-card h1{font-size:22px;font-weight:600;margin-bottom:6px;letter-spacing:-0.5px}
+.setup-card p{font-size:13px;color:var(--text2);margin-bottom:0;line-height:1.7}
+.setup-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);display:inline-block;margin-right:8px;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+#setup-error{display:none;color:var(--red);font-size:12px;margin-top:12px;padding:10px;background:var(--red-dim);border-radius:var(--radius);border:1px solid var(--red)}
+
+/* APP */
+.app-screen{display:none}
+.app-screen.active{display:flex;flex-direction:column;height:100vh}
+
+/* NAV */
+.nav{display:flex;align-items:center;border-bottom:1px solid var(--border);background:var(--bg1);padding:0 16px;flex-shrink:0;height:44px}
+.nav-logo{font-size:13px;font-weight:600;color:var(--text1);margin-right:20px;letter-spacing:-0.3px;display:flex;align-items:center;gap:8px}
+.nav-logo-dot{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.nav-tab{padding:0 14px;font-size:12px;cursor:pointer;height:44px;border-bottom:2px solid transparent;color:var(--text3);background:none;border-top:none;border-left:none;border-right:none;font-family:inherit;transition:all 0.12s;white-space:nowrap;letter-spacing:0.2px}
+.nav-tab.active{color:var(--text1);border-bottom-color:var(--accent);font-weight:500}
+.nav-tab:hover{color:var(--text2)}
+.nav-spacer{flex:1}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block;margin-right:6px}
+.sync-label{font-size:11px;color:var(--text3)}
+.btn-add{padding:5px 14px;background:var(--accent);color:#0a1a14;border:none;border-radius:var(--radius);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.12s;letter-spacing:0.2px}
+.btn-add:hover{background:var(--accent2)}
+
+/* PAGES */
+.page{display:none;flex:1;min-height:0}
+.page.active{display:flex;flex-direction:column}
+
+/* LIST */
+.list-body{display:grid;grid-template-columns:200px 1fr;flex:1;min-height:0;overflow:hidden}
+.sidebar{background:var(--bg1);border-right:1px solid var(--border);padding:12px;display:flex;flex-direction:column;gap:12px;overflow-y:auto}
+.stat-row{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.stat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px;text-align:center}
+.stat-num{font-size:18px;font-weight:600;color:var(--text1)}
+.stat-lbl{font-size:10px;color:var(--text3);margin-top:1px;letter-spacing:0.3px}
+.fl{font-size:10px;color:var(--text3);font-weight:500;margin-bottom:4px;letter-spacing:0.5px;text-transform:uppercase}
+select,input[type=text],textarea{width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg3);color:var(--text1);font-size:12px;font-family:inherit;transition:border-color 0.12s}
+select:focus,input:focus,textarea:focus{outline:none;border-color:var(--border2)}
+.tag-cloud{display:flex;flex-wrap:wrap;gap:3px}
+.tag-btn{background:none;border:1px solid var(--border);border-radius:20px;padding:2px 8px;font-size:10px;color:var(--text3);cursor:pointer;transition:all 0.12s;font-family:inherit}
+.tag-btn:hover,.tag-btn.active{background:var(--accent-dim);color:var(--accent);border-color:var(--accent)}
 
 /* TOOLBAR */
-.toolbar{display:flex;gap:8px;margin-bottom:1.25rem;flex-wrap:wrap;align-items:center;}
-.search-input{background:var(--surface);border:1px solid var(--border2);border-radius:var(--rs);color:var(--text);font-family:var(--fb);font-size:13px;padding:7px 12px;outline:none;width:220px;transition:border-color .18s;}
-.search-input:focus{border-color:var(--accent);}
-.search-input::placeholder{color:var(--muted);}
-.sort-select{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);color:var(--muted);font-family:var(--fb);font-size:13px;padding:7px 10px;outline:none;cursor:pointer;}
-.sort-select option{background:var(--surface2);}
+.main-col{display:flex;flex-direction:column;overflow:hidden}
+.toolbar{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg1)}
+.sw{flex:1;position:relative}
+.sw input{padding-left:28px;background:var(--bg2)}
+.si{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:12px;pointer-events:none}
+.btn{padding:5px 12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg3);color:var(--text2);font-size:12px;cursor:pointer;font-family:inherit;transition:all 0.12s;white-space:nowrap}
+.btn:hover{border-color:var(--border2);color:var(--text1)}
+.btn:disabled{opacity:0.35;cursor:not-allowed}
+.btn.danger{border-color:var(--red-dim);color:var(--red)}
+.btn.danger:hover{background:var(--red-dim)}
 
-/* FILTER PILLS */
-.filter-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1.25rem;align-items:center;}
-.pill{padding:4px 13px;border-radius:100px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid transparent;transition:all .18s;background:var(--surface2);color:var(--muted);border-color:var(--border);}
-.pill:hover,.pill.active{color:var(--text);background:var(--surface3);border-color:var(--border2);}
-.pill.p-reading{color:var(--reading);background:rgba(126,159,208,.1);border-color:rgba(126,159,208,.2);}
-.pill.p-reading:hover,.pill.p-reading.active{background:rgba(126,159,208,.22);}
-.pill.p-want{color:var(--want);background:rgba(160,126,208,.1);border-color:rgba(160,126,208,.2);}
-.pill.p-want:hover,.pill.p-want.active{background:rgba(160,126,208,.22);}
-.pill.p-done{color:var(--done);background:rgba(126,200,160,.1);border-color:rgba(126,200,160,.2);}
-.pill.p-done:hover,.pill.p-done.active{background:rgba(126,200,160,.22);}
-.tag-pill{padding:3px 10px;border-radius:100px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--surface2);color:var(--muted);transition:all .18s;}
-.tag-pill:hover,.tag-pill.active{border-color:var(--accent);color:var(--accent);}
+/* PAPER LIST */
+.paper-list{flex:1;overflow-y:auto;padding:8px;background:var(--bg0)}
+.pc{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px;margin-bottom:6px;cursor:pointer;transition:all 0.12s}
+.pc:hover{border-color:var(--border2);background:var(--bg3)}
+.pc.sel{border-color:var(--accent);background:var(--bg3)}
+.ph{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:4px}
+.pt{font-weight:500;font-size:13px;line-height:1.4;flex:1;color:var(--text1)}
+.sb{flex-shrink:0;font-size:10px;padding:2px 7px;border-radius:20px;font-weight:500;letter-spacing:0.2px}
+.s-unread{background:var(--yellow-dim);color:var(--yellow)}
+.s-reading{background:var(--blue-dim);color:var(--blue)}
+.s-done{background:var(--accent-dim);color:var(--accent)}
+.pm{font-size:11px;color:var(--text3);margin-bottom:6px}
+.pt-row{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:4px}
+.tg{font-size:10px;padding:2px 7px;border-radius:20px;background:var(--bg4);color:var(--text3);border:1px solid var(--border)}
+.pdf-badge{font-size:10px;padding:2px 7px;border-radius:20px;background:var(--orange-dim);color:var(--orange);border:1px solid var(--orange-dim)}
+.pnp{font-size:11px;color:var(--text3);font-style:italic;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.empty{text-align:center;padding:48px;color:var(--text3);font-size:13px;line-height:2}
 
-/* BOOK GRID */
-.book-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:13px;}
-.book-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;cursor:pointer;transition:border-color .2s,transform .2s;}
-.book-card:hover{border-color:var(--border2);transform:translateY(-3px);}
-.book-cover{height:195px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;}
-.book-cover img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
-.cover-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;padding:.9rem;text-align:center;font-family:var(--fd);font-size:.82rem;line-height:1.35;}
-.status-dot{position:absolute;top:8px;right:8px;width:8px;height:8px;border-radius:50%;z-index:2;box-shadow:0 0 0 2px rgba(0,0,0,.5);}
-.status-dot.reading{background:var(--reading);}
-.status-dot.want{background:var(--want);}
-.status-dot.done{background:var(--done);}
-.book-info{padding:9px 11px 11px;}
-.book-title{font-weight:500;font-size:12.5px;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.book-author{font-size:11px;color:var(--muted);margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.book-tags{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:5px;}
-.btag{font-size:10px;padding:1px 7px;border-radius:100px;background:var(--surface3);color:var(--muted);border:1px solid var(--border);}
-.stars{display:flex;gap:1px;}
-.star{font-size:11px;}.star.f{color:var(--accent);}.star.e{color:var(--surface3);}
-.prog-wrap{margin-top:7px;}
-.prog-bar{height:3px;background:var(--surface3);border-radius:2px;overflow:hidden;}
-.prog-fill{height:100%;background:var(--reading);border-radius:2px;}
-.prog-lbl{font-size:10px;color:var(--muted);margin-top:2px;}
+/* DETAIL MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:200;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto}
+.overlay.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);width:100%;max-width:720px;padding:24px;margin:auto}
+.modal-title{font-size:16px;font-weight:600;margin-bottom:16px;letter-spacing:-0.3px}
+.fr{margin-bottom:12px}
+.fr label{display:block;font-size:10px;color:var(--text3);margin-bottom:4px;font-weight:500;text-transform:uppercase;letter-spacing:0.5px}
+.fr textarea{min-height:64px;resize:vertical;background:var(--bg3)}
+.btn-row{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
 
-/* STATS */
-.goal-banner{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem 1.5rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;}
-.goal-label{font-size:12px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.07em;}
-.goal-value{font-family:var(--fd);font-size:1.6rem;}
-.goal-bar-wrap{flex:1;min-width:160px;}
-.goal-bar{height:6px;background:var(--surface3);border-radius:3px;overflow:hidden;margin-top:6px;}
-.goal-fill{height:100%;background:var(--accent);border-radius:3px;transition:width .6s;}
-.goal-pct{font-size:11px;color:var(--muted);margin-top:4px;}
-.goal-edit{display:flex;gap:8px;align-items:center;}
-.goal-input{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--rs);color:var(--text);font-family:var(--fb);font-size:14px;padding:6px 10px;width:70px;outline:none;}
-.goal-input:focus{border-color:var(--accent);}
-.goal-btn{padding:6px 14px;background:var(--accent);color:#0d0d0f;border:none;border-radius:var(--rs);font-family:var(--fb);font-size:13px;font-weight:500;cursor:pointer;transition:opacity .18s;}
-.goal-btn:hover{opacity:.85;}
-.stats-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:1.5rem;}
-.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:.9rem 1.1rem;position:relative;overflow:hidden;}
-.stat-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;}
-.sc-gold::after{background:var(--accent);}.sc-blue::after{background:var(--accent2);}.sc-green::after{background:var(--accent3);}.sc-purple::after{background:var(--want);}
-.slabel{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;}
-.svalue{font-family:var(--fd);font-size:1.7rem;}
-.ssub{font-size:10px;color:var(--muted);margin-top:1px;}
-.chart-area{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.4rem;margin-bottom:1.5rem;}
-.chart-title{font-size:12px;font-weight:500;margin-bottom:1.1rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;}
-.bars{display:flex;align-items:flex-end;gap:8px;height:110px;}
-.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;height:100%;justify-content:flex-end;}
-.bar-fill{width:100%;border-radius:4px 4px 0 0;opacity:.7;transition:opacity .2s;min-height:4px;}
-.bar-fill:hover{opacity:1;}
-.bar-lbl{font-size:10px;color:var(--muted);text-align:center;}
+/* STRUCTURED NOTES */
+.notes-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.note-block{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:12px}
+.note-block.full{grid-column:1/-1}
+.note-label{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.note-label-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.note-content{font-size:12px;color:var(--text2);line-height:1.7;white-space:pre-wrap;min-height:20px}
+.note-empty{color:var(--text3);font-style:italic}
+textarea.note-input{background:var(--bg4);border-color:var(--border);font-size:12px;min-height:80px;color:var(--text1)}
 
-/* ADD FORM */
-.add-form{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.75rem;max-width:580px;}
-.ftitle{font-family:var(--fd);font-size:1.25rem;margin-bottom:1.4rem;}
-.fg{margin-bottom:1.1rem;}
-.fl{display:block;font-size:11px;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em;}
-.fi,.fs,.fta{width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--rs);color:var(--text);font-family:var(--fb);font-size:14px;padding:9px 13px;outline:none;transition:border-color .18s;}
-.fi:focus,.fs:focus,.fta:focus{border-color:var(--accent);}
-.fta{resize:vertical;min-height:70px;}
-.fs option{background:var(--surface2);}
-.frow{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
-.isbn-row{display:flex;gap:8px;}
-.isbn-row .fi{flex:1;}
-.srch-btn{padding:9px 14px;background:var(--surface3);border:1px solid var(--border2);border-radius:var(--rs);color:var(--text);font-family:var(--fb);font-size:13px;cursor:pointer;white-space:nowrap;transition:all .18s;}
-.srch-btn:hover{border-color:var(--accent);}
-.srch-btn:disabled{opacity:.45;cursor:default;}
-.cprev{display:none;margin-top:9px;align-items:center;gap:11px;background:var(--surface2);border-radius:var(--rs);padding:9px;}
-.cprev.show{display:flex;}
-.cprev img{width:46px;height:62px;object-fit:cover;border-radius:4px;border:1px solid var(--border2);flex-shrink:0;}
-.cprev-title{font-size:13px;font-weight:500;}
-.cprev-sub{font-size:11px;color:var(--muted);margin-top:1px;}
-.star-input{display:flex;gap:3px;}
-.star-btn{font-size:20px;cursor:pointer;background:none;border:none;padding:0;transition:transform .1s;color:var(--surface3);}
-.star-btn.active{color:var(--accent);}
-.star-btn:hover{transform:scale(1.2);}
-.tag-input-wrap{display:flex;gap:7px;flex-wrap:wrap;align-items:center;}
-.tag-input-wrap .fi{flex:1;min-width:120px;}
-.tag-add-btn{padding:9px 13px;background:var(--surface3);border:1px solid var(--border2);border-radius:var(--rs);color:var(--text);font-family:var(--fb);font-size:13px;cursor:pointer;white-space:nowrap;transition:all .18s;}
-.tag-add-btn:hover{border-color:var(--accent);}
-.pending-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px;}
-.ptag{font-size:12px;padding:2px 9px;border-radius:100px;background:rgba(200,169,110,.12);color:var(--accent);border:1px solid rgba(200,169,110,.25);display:flex;align-items:center;gap:5px;}
-.ptag-x{cursor:pointer;opacity:.6;font-size:11px;}
-.ptag-x:hover{opacity:1;}
-.submit-btn{width:100%;padding:11px;background:var(--accent);color:#0d0d0f;border:none;border-radius:var(--rs);font-family:var(--fb);font-size:14px;font-weight:500;cursor:pointer;transition:opacity .18s;margin-top:.4rem;}
-.submit-btn:hover{opacity:.85;}
-.success-msg{display:none;background:rgba(126,200,160,.1);border:1px solid rgba(126,200,160,.28);color:var(--done);border-radius:var(--rs);padding:9px 13px;font-size:13px;margin-bottom:1.1rem;}
+/* SECTION HEADER */
+.sec-head{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);padding:8px 0 6px;border-top:1px solid var(--border);margin-top:12px;margin-bottom:8px}
+.sec-head:first-child{border-top:none;margin-top:0;padding-top:0}
 
-/* MODAL */
-.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;align-items:center;justify-content:center;}
-.modal-bg.open{display:flex;}
-.modal{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:1.75rem;width:92%;max-width:520px;position:relative;max-height:90vh;overflow-y:auto;}
-.modal-close{position:absolute;top:13px;right:15px;background:none;border:none;color:var(--muted);font-size:17px;cursor:pointer;}
-.modal-top{display:flex;gap:1.2rem;margin-bottom:1rem;}
-.modal-cimg{width:80px;height:112px;border-radius:6px;object-fit:cover;border:1px solid var(--border2);flex-shrink:0;}
-.modal-cph{width:80px;height:112px;border-radius:6px;border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:.62rem;text-align:center;padding:7px;flex-shrink:0;}
-.modal-btitle{font-family:var(--fd);font-size:1.1rem;margin-bottom:2px;line-height:1.3;}
-.modal-author{color:var(--muted);font-size:13px;margin-bottom:8px;}
-.modal-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:7px;}
-.mi{font-size:12px;color:var(--muted);}
-.mv{color:var(--text);font-weight:500;}
-.sbadge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:500;}
-.sb-reading{background:rgba(126,159,208,.14);color:var(--reading);}
-.sb-want{background:rgba(160,126,208,.14);color:var(--want);}
-.sb-done{background:rgba(126,200,160,.14);color:var(--done);}
+/* STATUS + TAGS ROW */
+.meta-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
 
-/* MODAL TABS */
-.mtabs{display:flex;gap:2px;border-bottom:1px solid var(--border);margin:1rem 0 1rem;}
-.mtab{padding:5px 12px;border:none;background:transparent;color:var(--muted);font-family:var(--fb);font-size:13px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .18s;}
-.mtab.active{color:var(--accent);border-bottom-color:var(--accent);}
-.mtab-panel{display:none;}.mtab-panel.active{display:block;}
+/* PDF */
+.pdf-viewer-wrap{display:none;position:fixed;inset:0;background:#000;z-index:300;flex-direction:column}
+.pdf-viewer-wrap.open{display:flex}
+.pdf-toolbar{display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--bg1);border-bottom:1px solid var(--border);flex-shrink:0}
+.pdf-toolbar-title{font-size:12px;color:var(--text2);flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.pdf-btn-sm{padding:5px 14px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;font-family:inherit;font-size:12px;text-decoration:none;display:inline-block}
+.pdf-btn-sm:hover{color:var(--text1);border-color:var(--border2)}
+.pdf-iframe{flex:1;border:none}
 
-/* HIGHLIGHTS */
-.highlight-list{display:flex;flex-direction:column;gap:9px;margin-bottom:.9rem;}
-.hl-item{background:var(--surface2);border-radius:var(--rs);padding:10px 13px;border-left:3px solid var(--accent);position:relative;}
-.hl-text{font-size:13px;line-height:1.6;font-style:italic;color:var(--text);}
-.hl-meta{font-size:11px;color:var(--muted);margin-top:4px;}
-.hl-del{position:absolute;top:8px;right:10px;background:none;border:none;color:var(--muted2);cursor:pointer;font-size:13px;}
-.hl-del:hover{color:var(--danger);}
-.hl-add{display:flex;flex-direction:column;gap:7px;}
-.hl-add .fta{min-height:60px;font-size:13px;}
-.hl-add-row{display:flex;gap:7px;}
-.hl-add-row .fi{flex:1;font-size:13px;padding:7px 11px;}
-.hl-submit{padding:7px 16px;background:var(--surface3);border:1px solid var(--border2);border-radius:var(--rs);color:var(--text);font-family:var(--fb);font-size:13px;cursor:pointer;transition:all .18s;}
-.hl-submit:hover{border-color:var(--accent);color:var(--accent);}
+/* PDF UPLOAD */
+.pdf-drop{border:2px dashed var(--border);border-radius:var(--radius);padding:18px;text-align:center;cursor:pointer;transition:all 0.15s;position:relative}
+.pdf-drop:hover,.pdf-drop.drag{border-color:var(--accent);background:var(--accent-dim)}
+.pdf-drop-text{font-size:12px;color:var(--text3)}
+.pdf-file-info{display:flex;align-items:center;gap:10px;background:var(--orange-dim);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;margin-top:8px}
+.pdf-file-name{font-size:12px;color:var(--orange);flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.pdf-file-clear{background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px;padding:0 4px;line-height:1}
 
-.delete-btn{margin-top:1.4rem;width:100%;padding:8px;background:transparent;border:1px solid rgba(207,112,112,.28);color:var(--danger);border-radius:var(--rs);font-family:var(--fb);font-size:13px;cursor:pointer;transition:background .18s;}
-.delete-btn:hover{background:rgba(207,112,112,.08);}
+/* AI BOX */
+.ai-box{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:12px;font-size:12px;line-height:1.7;white-space:pre-wrap;color:var(--text2)}
+.ai-loading{color:var(--text3);font-style:italic}
+.rec-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;cursor:pointer;transition:all 0.12s;margin-bottom:6px}
+.rec-card:hover{border-color:var(--border2)}
+.rec-title{font-size:12px;font-weight:500;margin-bottom:3px;color:var(--text1)}
+.rec-reason{font-size:11px;color:var(--text3)}
 
-.empty-state{text-align:center;padding:3.5rem 2rem;color:var(--muted);}
-.empty-icon{font-size:2.2rem;margin-bottom:.6rem;}
+/* LOOKUP BOX */
+.lookup-box{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:14px}
+.lookup-tabs{display:flex;gap:4px;margin-bottom:10px}
+.lt{padding:4px 12px;font-size:11px;border:1px solid var(--border);border-radius:20px;background:none;color:var(--text3);cursor:pointer;font-family:inherit;transition:all 0.12s}
+.lt.active{background:var(--accent);color:#0a1a14;border-color:var(--accent);font-weight:500}
+.lookup-hint{font-size:11px;color:var(--text3);margin-top:6px}
+.lookup-hint code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:10px}
+#lookup-status{font-size:11px;margin-top:6px;display:none}
 
-/* GENRE BADGES */
-.genre-badge{display:inline-block;font-size:10px;font-weight:500;padding:1px 8px;border-radius:100px;margin-bottom:5px;}
-.gb-小説{background:rgba(91,155,213,.18);color:#5b9bd5;}
-.gb-ビジネス{background:rgba(200,169,110,.18);color:#c8a96e;}
-.gb-自己啓発{background:rgba(126,200,160,.18);color:#7ec8a0;}
-.gb-技術{background:rgba(160,126,208,.18);color:#a07ed0;}
-.gb-歴史{background:rgba(207,144,112,.18);color:#cf9070;}
-.gb-その他{background:rgba(120,120,120,.18);color:#999;}
+/* DASHBOARD */
+.dash-body{padding:16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;flex:1;background:var(--bg0)}
+.dash-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.metric{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px}
+.metric-num{font-size:24px;font-weight:600;color:var(--text1);letter-spacing:-1px}
+.metric-lbl{font-size:10px;color:var(--text3);margin-top:2px;text-transform:uppercase;letter-spacing:0.5px}
+.dash-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.dash-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px}
+.dash-card h3{font-size:10px;font-weight:500;margin-bottom:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px}
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.bar-label{font-size:11px;color:var(--text2);width:100px;flex-shrink:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.bar-track{flex:1;background:var(--bg4);border-radius:3px;height:6px;overflow:hidden}
+.bar-fill{height:100%;border-radius:3px;background:var(--accent);transition:width 0.5s ease}
+.bar-count{font-size:11px;color:var(--text3);width:20px;text-align:right;flex-shrink:0}
+.monthly-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:3px;align-items:end;height:72px}
+.month-col{display:flex;flex-direction:column;align-items:center;gap:2px}
+.month-bar{width:100%;border-radius:2px;min-height:3px;transition:height 0.4s ease}
+.month-lbl{font-size:8px;color:var(--text3)}
+.donut-wrap{display:flex;align-items:center;gap:16px}
+.legend{display:flex;flex-direction:column;gap:6px}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2)}
+.legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 
-/* TIMELINE */
-.tl-toolbar{display:flex;gap:8px;margin-bottom:1.25rem;align-items:center;flex-wrap:wrap;}
-.tl-mode-btn{padding:5px 14px;border-radius:100px;border:1px solid var(--border2);background:var(--surface2);color:var(--muted);font-family:var(--fb);font-size:13px;cursor:pointer;transition:all .18s;}
-.tl-mode-btn.active{background:var(--surface3);color:var(--text);border-color:var(--border2);}
-.tl-year-select{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);color:var(--muted);font-family:var(--fb);font-size:13px;padding:6px 10px;outline:none;cursor:pointer;}
-.tl-year-select option{background:var(--surface2);}
-.tl-group{margin-bottom:2rem;}
-.tl-group-header{display:flex;align-items:center;gap:12px;margin-bottom:.9rem;}
-.tl-group-title{font-family:var(--fd);font-size:1.05rem;color:var(--text);}
-.tl-group-count{font-size:12px;color:var(--muted);background:var(--surface2);border-radius:100px;padding:2px 10px;border:1px solid var(--border);}
-.tl-list{display:flex;flex-direction:column;gap:8px;}
-.tl-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;display:flex;align-items:center;gap:13px;cursor:pointer;transition:border-color .18s;}
-.tl-item:hover{border-color:var(--border2);}
-.tl-thumb{width:36px;height:50px;border-radius:4px;object-fit:cover;border:1px solid var(--border2);flex-shrink:0;}
-.tl-thumb-ph{width:36px;height:50px;border-radius:4px;border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:.45rem;text-align:center;padding:4px;flex-shrink:0;}
-.tl-info{flex:1;min-width:0;}
-.tl-title{font-weight:500;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.tl-author{font-size:11px;color:var(--muted);margin-top:1px;}
-.tl-meta{display:flex;gap:8px;margin-top:5px;flex-wrap:wrap;align-items:center;}
-.tl-date{font-size:11px;color:var(--muted);}
-.tl-pages{font-size:11px;color:var(--muted);}
-.tl-stars{display:flex;gap:1px;}
-.tl-star{font-size:10px;}.tl-star.f{color:var(--accent);}.tl-star.e{color:var(--surface3);}
-.tl-empty{text-align:center;padding:3rem 2rem;color:var(--muted);font-size:14px;}
-
-/* DATES */
-.date-row{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
-.fi[type="date"]{color-scheme:dark;}
-
-@media(max-width:640px){
-  .stats-grid{grid-template-columns:repeat(2,1fr);}
-  .header{padding:1rem;flex-direction:column;gap:10px;}
-  .main{padding:1rem;}
-  .book-grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));}
-  .frow,.date-row{grid-template-columns:1fr;}
+@media(max-width:600px){
+  .list-body{grid-template-columns:1fr}
+  .sidebar{display:none}
+  .dash-metrics{grid-template-columns:1fr 1fr}
+  .dash-row{grid-template-columns:1fr}
+  .notes-grid{grid-template-columns:1fr}
 }
 </style>
 </head>
 <body>
-<div class="app">
-  <div class="header">
-    <div class="logo"><span class="logo-book">Book</span> <span class="logo-tracker">Tracker</span></div>
-    <span id="sync-indicator" style="font-size:11px;color:var(--muted);"></span>
-    <div class="nav-tabs">
-      <button class="nav-tab active" onclick="showSection('library')">本棚</button>
-      <button class="nav-tab" onclick="showSection('timeline')">履歴</button>
-      <button class="nav-tab" onclick="showSection('stats')">統計</button>
-      <button class="nav-tab" onclick="showSection('add')">追加</button>
+
+<div class="setup-screen" id="setup-screen">
+  <div class="setup-card">
+    <h1><span class="setup-dot"></span>論文管理</h1>
+    <p>Supabaseに接続中...</p>
+    <div id="setup-error"></div>
+  </div>
+</div>
+
+<div class="app-screen" id="app-screen">
+  <div class="nav">
+    <div class="nav-logo"><div class="nav-logo-dot"></div>論文管理</div>
+    <button class="nav-tab active" onclick="showPage('list',this)">ライブラリ</button>
+    <button class="nav-tab" onclick="showPage('dash',this)">ダッシュボード</button>
+    <button class="nav-tab" onclick="showPage('matrix',this)">比較表</button>
+    <div class="nav-spacer"></div>
+    <span class="sync-dot"></span><span class="sync-label">クラウド同期</span>
+    <button class="btn-add" onclick="openAdd()" style="margin-left:12px">+ 追加</button>
+  </div>
+
+  <!-- LIST PAGE -->
+  <div class="page active" id="page-list">
+    <div class="list-body">
+      <div class="sidebar">
+        <div class="stat-row" id="stats-sb"></div>
+        <div><div class="fl">状態</div><select id="filter-status" onchange="renderAll()"><option value="">すべて</option><option value="unread">未読</option><option value="reading">読書中</option><option value="done">読了</option></select></div>
+        <div><div class="fl">カテゴリ</div><select id="filter-cat" onchange="renderAll()"><option value="">すべて</option></select></div>
+        <div><div class="fl">タグ</div><div class="tag-cloud" id="tag-cloud"></div></div>
+      </div>
+      <div class="main-col">
+        <div class="toolbar">
+          <div class="sw"><span class="si">⌕</span><input type="text" id="search-input" placeholder="タイトル・著者・メモを検索..." oninput="renderAll()"></div>
+          <select id="sort-sel" onchange="renderAll()" style="width:100px"><option value="date-desc">新しい順</option><option value="date-asc">古い順</option><option value="title">タイトル順</option><option value="status">状態順</option></select>
+        </div>
+        <div class="paper-list" id="paper-list"></div>
+      </div>
     </div>
   </div>
 
-  <div class="main">
-    <!-- LIBRARY -->
-    <div class="section active" id="section-library">
-      <div class="toolbar">
-        <input class="search-input" id="search-q" placeholder="🔍 タイトル・著者を検索..." oninput="renderBooks()">
-        <select class="sort-select" id="sort-sel" onchange="renderBooks()">
-          <option value="added">追加順</option>
-          <option value="title">タイトル順</option>
-          <option value="rating">評価順</option>
-          <option value="pages">ページ数順</option>
-          <option value="date_done">読了日順</option>
-        </select>
-      </div>
-      <div class="filter-row" id="status-filter">
-        <button class="pill active" data-f="all" onclick="setStatusFilter('all',this)">すべて</button>
-        <button class="pill p-reading" data-f="reading" onclick="setStatusFilter('reading',this)">読中</button>
-        <button class="pill p-want" data-f="want" onclick="setStatusFilter('want',this)">読みたい</button>
-        <button class="pill p-done" data-f="done" onclick="setStatusFilter('done',this)">読了</button>
-      </div>
-      <div class="filter-row" id="tag-filter"></div>
-      <div class="book-grid" id="book-grid"></div>
-    </div>
+  <!-- DASHBOARD PAGE -->
+  <div class="page" id="page-dash">
+    <div class="dash-body" id="dash-body"></div>
+  </div>
 
-    <!-- TIMELINE -->
-    <div class="section" id="section-timeline">
-      <div class="tl-toolbar">
-        <button class="tl-mode-btn active" id="tl-month-btn" onclick="setTLMode('month')">月別</button>
-        <button class="tl-mode-btn" id="tl-year-btn" onclick="setTLMode('year')">年別</button>
-        <select class="tl-year-select" id="tl-year-sel" onchange="renderTimeline()"></select>
-      </div>
-      <div id="timeline-body"></div>
+  <!-- MATRIX PAGE -->
+  <div class="page" id="page-matrix">
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);background:var(--bg1);flex-shrink:0;flex-wrap:wrap">
+      <select id="matrix-cat-filter" onchange="renderMatrix()" style="width:160px;background:var(--bg2)"><option value="">すべてのカテゴリ</option></select>
+      <select id="matrix-status-filter" onchange="renderMatrix()" style="width:120px;background:var(--bg2)"><option value="">すべての状態</option><option value="unread">未読</option><option value="reading">読書中</option><option value="done">読了</option></select>
+      <select id="matrix-col-filter" onchange="renderMatrix()" style="width:150px;background:var(--bg2)">
+        <option value="all">全項目表示</option>
+        <option value="subjects">対象者のみ</option>
+        <option value="protocol">プロトコルのみ</option>
+        <option value="outcomes">結果のみ</option>
+        <option value="statistics">統計のみ</option>
+        <option value="discussion">考察のみ</option>
+      </select>
+      <div style="flex:1"></div>
+      <span style="font-size:11px;color:var(--text3)" id="matrix-count"></span>
     </div>
-
-    <!-- STATS -->
-    <div class="section" id="section-stats">
-      <div class="goal-banner">
-        <div>
-          <div class="goal-label">今年の目標</div>
-          <div class="goal-value" id="goal-display">— 冊</div>
-        </div>
-        <div class="goal-bar-wrap">
-          <div class="goal-label" id="goal-progress-lbl">読了 0 冊</div>
-          <div class="goal-bar"><div class="goal-fill" id="goal-fill" style="width:0%"></div></div>
-          <div class="goal-pct" id="goal-pct">目標を設定してください</div>
-        </div>
-        <div class="goal-edit">
-          <input class="goal-input" id="goal-input" type="number" min="1" max="999" placeholder="目標">
-          <button class="goal-btn" onclick="setGoal()">設定</button>
-        </div>
-      </div>
-      <div class="stats-grid">
-        <div class="stat-card sc-gold"><div class="slabel">読了</div><div class="svalue" id="s-done">0</div><div class="ssub">冊</div></div>
-        <div class="stat-card sc-blue"><div class="slabel">総ページ数</div><div class="svalue" id="s-pages">0</div><div class="ssub">ページ</div></div>
-        <div class="stat-card sc-green"><div class="slabel">総金額</div><div class="svalue" id="s-cost">¥0</div><div class="ssub">円</div></div>
-        <div class="stat-card sc-purple"><div class="slabel">平均評価</div><div class="svalue" id="s-rating">—</div><div class="ssub">/ 5</div></div>
-      </div>
-      <div class="chart-area"><div class="chart-title">ジャンル別冊数</div><div class="bars" id="c-genre"></div></div>
-      <div class="chart-area"><div class="chart-title">ステータス内訳</div><div class="bars" id="c-status"></div></div>
-    </div>
-
-    <!-- ADD -->
-    <div class="section" id="section-add">
-      <div class="add-form">
-        <div class="ftitle">新しい本を追加</div>
-        <div class="success-msg" id="success-msg">本を追加しました！</div>
-        <div class="fg">
-          <label class="fl">ISBN / タイトルで検索</label>
-          <div class="isbn-row">
-            <input class="fi" id="f-isbn" placeholder="例: 9784... またはタイトル">
-            <button class="srch-btn" id="srch-btn" onclick="searchBook()">検索</button>
-          </div>
-          <div class="cprev" id="cprev">
-            <img id="cprev-img" src="" alt="">
-            <div><div class="cprev-title" id="cprev-title"></div><div class="cprev-sub" id="cprev-sub"></div></div>
-          </div>
-        </div>
-        <div class="fg"><label class="fl">タイトル *</label><input class="fi" id="f-title" placeholder="タイトルを入力..."></div>
-        <div class="fg"><label class="fl">著者</label><input class="fi" id="f-author" placeholder="著者名..."></div>
-        <div class="fg"><label class="fl">表紙画像URL（任意）</label><input class="fi" id="f-cover" placeholder="https://..."></div>
-        <div class="frow">
-          <div class="fg"><label class="fl">ジャンル</label>
-            <select class="fs" id="f-genre">
-              <option value="小説">小説</option><option value="ビジネス">ビジネス</option>
-              <option value="自己啓発">自己啓発</option><option value="技術">技術</option>
-              <option value="歴史">歴史</option><option value="その他">その他</option>
-            </select>
-          </div>
-          <div class="fg"><label class="fl">ステータス</label>
-            <select class="fs" id="f-status">
-              <option value="want">読みたい</option><option value="reading">読中</option><option value="done">読了</option>
-            </select>
-          </div>
-        </div>
-        <div class="date-row">
-          <div class="fg"><label class="fl">開始日</label><input class="fi" id="f-start" type="date"></div>
-          <div class="fg"><label class="fl">読了日</label><input class="fi" id="f-done" type="date"></div>
-        </div>
-        <div class="frow">
-          <div class="fg"><label class="fl">ページ数</label><input class="fi" id="f-pages" type="number" placeholder="300"></div>
-          <div class="fg"><label class="fl">価格（円）</label><input class="fi" id="f-price" type="number" placeholder="1500"></div>
-        </div>
-        <div class="fg"><label class="fl">進捗（%）</label><input class="fi" id="f-progress" type="number" min="0" max="100" placeholder="0〜100"></div>
-        <div class="fg"><label class="fl">評価</label>
-          <div class="star-input" id="star-input">
-            <button class="star-btn" onclick="setRating(1)">★</button>
-            <button class="star-btn" onclick="setRating(2)">★</button>
-            <button class="star-btn" onclick="setRating(3)">★</button>
-            <button class="star-btn" onclick="setRating(4)">★</button>
-            <button class="star-btn" onclick="setRating(5)">★</button>
-          </div>
-        </div>
-        <div class="fg"><label class="fl">タグ</label>
-          <div class="tag-input-wrap">
-            <input class="fi" id="f-tag-in" placeholder="タグを入力..." onkeydown="if(event.key==='Enter'){event.preventDefault();addPendingTag();}">
-            <button class="tag-add-btn" onclick="addPendingTag()">追加</button>
-          </div>
-          <div class="pending-tags" id="pending-tags"></div>
-        </div>
-        <div class="fg"><label class="fl">レビュー・メモ</label><textarea class="fta" id="f-review" placeholder="感想や気づきを..."></textarea></div>
-        <button class="submit-btn" onclick="addBook()">追加する</button>
-      </div>
+    <div style="flex:1;overflow:auto">
+      <div id="matrix-body"></div>
     </div>
   </div>
 </div>
 
-<!-- MODAL -->
-<div class="modal-bg" id="modal" onclick="if(event.target===this)closeModal()">
-  <div class="modal">
-    <button class="modal-close" onclick="closeModal()">✕</button>
-    <div id="modal-content"></div>
+<!-- PDF VIEWER -->
+<div class="pdf-viewer-wrap" id="pdf-viewer">
+  <div class="pdf-toolbar">
+    <span class="pdf-toolbar-title" id="pdf-viewer-title"></span>
+    <a id="pdf-open-link" href="#" target="_blank" class="pdf-btn-sm">↗ 別タブで開く</a>
+    <button class="pdf-btn-sm" onclick="closePdfViewer()">✕ 閉じる</button>
+  </div>
+  <iframe class="pdf-iframe" id="pdf-iframe" src="" title="PDF"></iframe>
+</div>
+
+<!-- ADD/EDIT MODAL -->
+<div class="overlay" id="add-overlay">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-title" id="modal-label">論文を追加</div>
+
+    <!-- LOOKUP -->
+    <div class="lookup-box">
+      <div style="font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:0.5px;color:var(--text3);margin-bottom:8px">自動入力</div>
+      <div class="lookup-tabs">
+        <button class="lt active" id="tab-doi" onclick="switchTab('doi')">DOI</button>
+        <button class="lt" id="tab-pm" onclick="switchTab('pm')">PubMed</button>
+      </div>
+      <div style="display:flex;gap:8px">
+        <input id="f-lookup-input" type="text" placeholder="10.1519/... または https://doi.org/..." style="flex:1">
+        <button class="btn" id="lookup-fetch-btn" onclick="fetchLookup()" style="background:var(--accent);color:#0a1a14;border-color:var(--accent);font-weight:500">取得</button>
+      </div>
+      <div class="lookup-hint" id="lookup-hint">DOI例: <code>10.1519/JSC.0000000000004000</code></div>
+      <div id="lookup-status"></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="fr" style="grid-column:1/-1"><label>タイトル *</label><input id="f-title" type="text" placeholder="論文タイトル"></div>
+      <div class="fr"><label>著者</label><input id="f-author" type="text" placeholder="著者名"></div>
+      <div class="fr"><label>雑誌・会議名</label><input id="f-venue" type="text" placeholder="J Strength Cond Res など"></div>
+      <div class="fr"><label>年</label><input id="f-year" type="text" placeholder="2024"></div>
+      <div class="fr"><label>PDF URL / DOI URL</label><input id="f-url" type="text" placeholder="https://pubmed.ncbi.nlm.nih.gov/..."></div>
+      <div class="fr"><label>カテゴリ</label><input id="f-category" type="text" placeholder="筋力トレーニング, 持久力 など"></div>
+      <div class="fr" style="grid-column:1/-1"><label>タグ（カンマ区切り）</label><input id="f-tags" type="text" placeholder="RCT, レジスタンス, 高齢者"></div>
+      <div class="fr"><label>読了状態</label><select id="f-status"><option value="unread">未読</option><option value="reading">読書中</option><option value="done">読了</option></select></div>
+      <div class="fr"><label>一言メモ</label><input id="f-quick_note" type="text" placeholder="この論文を一言で言うと..."></div>
+    </div>
+
+    <div style="font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:0.5px;color:var(--text3);margin:14px 0 10px;padding-top:14px;border-top:1px solid var(--border)">研究詳細</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="fr"><label>対象者・参加者</label><textarea id="f-subjects" placeholder="例: 健常男性20名（22±2歳）&#10;トレーニング経験2年以上&#10;除外基準: 骨格筋疾患など"></textarea></div>
+      <div class="fr"><label>トレーニング・介入プロトコル</label><textarea id="f-protocol" placeholder="例: 週3回12週間&#10;3セット×8-12回&#10;強度: 1RM 70-80%&#10;種目: スクワット、レッグプレス..."></textarea></div>
+      <div class="fr"><label>主な結果・アウトカム</label><textarea id="f-outcomes" placeholder="例: 筋断面積 +12%（p&lt;0.05）&#10;1RM +18%&#10;筋力とタンパク摂取量に有意な相関（r=0.72）"></textarea></div>
+      <div class="fr"><label>統計解析方法</label><textarea id="f-statistics" placeholder="例: 2×2 反復測定ANOVA&#10;効果量: Cohen's d&#10;有意水準: p&lt;0.05"></textarea></div>
+      <div class="fr" style="grid-column:1/-1"><label>考察・限界・実用上の指標</label><textarea id="f-discussion" placeholder="例: サンプルサイズが小さい&#10;介入期間が短い&#10;実用上は週2回でも効果が期待できる"></textarea></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn danger" id="del-btn" onclick="deletePaper()" style="margin-right:auto;display:none">削除</button>
+      <button class="btn" onclick="closeAdd()">キャンセル</button>
+      <button class="btn" onclick="savePaper()" style="background:var(--accent);color:#0a1a14;border-color:var(--accent);font-weight:500">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="overlay" id="detail-overlay">
+  <div class="modal" style="max-width:760px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:8px">
+      <div style="font-size:16px;font-weight:600;line-height:1.4;flex:1;letter-spacing:-0.3px" id="d-title"></div>
+      <button class="btn" onclick="closeDetail()" style="flex-shrink:0;padding:3px 10px">✕</button>
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:10px" id="d-meta"></div>
+    <div class="meta-row" id="d-tags"></div>
+
+    <!-- quick note -->
+    <div id="d-quick-note-wrap" style="display:none;background:var(--bg3);border-left:3px solid var(--accent);padding:10px 12px;border-radius:0 var(--radius) var(--radius) 0;margin-bottom:12px;font-size:13px;color:var(--text1);font-style:italic" id="d-quick-note"></div>
+
+    <!-- PDF URL -->
+    <div id="pdf-url-section" style="display:none;margin-bottom:12px">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--orange-dim);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px">
+        <span style="font-size:13px">📄</span>
+        <span style="font-size:11px;color:var(--orange);flex:1;word-break:break-all" id="d-pdf-url-text"></span>
+        <button class="btn" onclick="openPdfViewer()" style="font-size:11px;padding:3px 10px;color:var(--orange);border-color:var(--orange-dim)">アプリ内で開く</button>
+        <a id="d-pdf-link" href="#" target="_blank" class="btn" style="font-size:11px;padding:3px 10px;text-decoration:none">↗ 別タブ</a>
+      </div>
+    </div>
+
+    <!-- STRUCTURED NOTES -->
+    <div class="sec-head">研究詳細</div>
+    <div class="notes-grid" id="d-notes-grid"></div>
+
+    <!-- PDF UPLOAD -->
+    <div class="sec-head">PDFをアップロードしてAIに読ませる</div>
+    <div class="pdf-drop" id="pdf-drop">
+      <input type="file" id="pdf-file-input" accept=".pdf" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%" onchange="onPdfFileSelect(event)">
+      <div class="pdf-drop-text">📂 クリックまたはドラッグでPDFを選択</div>
+    </div>
+    <div class="pdf-file-info" id="pdf-file-info" style="display:none">
+      <span>📄</span><span class="pdf-file-name" id="pdf-file-name"></span>
+      <button class="pdf-file-clear" onclick="clearPdfFile()">✕</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+      <button class="btn" id="pdf-ai-btn" onclick="runPdfAI('summary')" style="font-size:11px;color:var(--orange);border-color:var(--orange-dim)">✨ 要約・キーワード生成</button>
+      <button class="btn" id="pdf-ai-btn2" onclick="runPdfAI('extract')" style="font-size:11px;color:var(--orange);border-color:var(--orange-dim)">📋 書誌情報を自動入力</button>
+    </div>
+    <div class="ai-box" id="pdf-ai-box" style="display:none;margin-top:8px"></div>
+
+    <!-- AI SUMMARY -->
+    <div class="sec-head" style="display:flex;align-items:center;justify-content:space-between">
+      <span>AI要約</span>
+      <button class="btn" id="ai-btn" onclick="runAI()" style="font-size:11px;padding:2px 10px">生成する</button>
+    </div>
+    <div class="ai-box" id="ai-box" style="display:none"></div>
+
+    <!-- RECOMMENDATIONS -->
+    <div class="sec-head" style="display:flex;align-items:center;justify-content:space-between">
+      <span>関連論文</span>
+      <button class="btn" onclick="runRec()" style="font-size:11px;padding:2px 10px">探す</button>
+    </div>
+    <div id="rec-area"></div>
+
+    <div class="btn-row" style="margin-top:16px">
+      <button class="btn danger" onclick="deletePaperFromDetail()">削除</button>
+      <button class="btn" onclick="editFromDetail()">編集</button>
+      <button class="btn" onclick="closeDetail()" style="background:var(--accent);color:#0a1a14;border-color:var(--accent);font-weight:500">閉じる</button>
+    </div>
   </div>
 </div>
 
 <script>
-const COLORS=['#c8a96e','#7e9fd0','#8fcfb0','#a07ed0','#cf9070','#70a8cf'];
-const SAMPLE_BOOKS=[
-  {id:1,title:'百年の孤独',author:'ガルシア＝マルケス',genre:'小説',status:'done',pages:448,price:1800,progress:100,rating:5,review:'孤独と時間が交差する圧倒的な物語。',color:'#7e9fd0',cover:'',tags:['名作','ラテン文学'],start:'2024-01-10',done:'2024-02-03',highlights:[{text:'世界は昨日生まれたばかりで、多くのものはまだ名前を持っていなかった。',page:'p.1',id:1}]},
-  {id:2,title:'ゼロ・トゥ・ワン',author:'ピーター・ティール',genre:'ビジネス',status:'done',pages:272,price:1700,progress:100,rating:4,review:'スタートアップの思考法を根本から問い直す一冊。',color:'#c8a96e',cover:'',tags:['スタートアップ','必読'],start:'2024-02-15',done:'2024-03-01',highlights:[]},
-  {id:3,title:'嫌われる勇気',author:'岸見一郎',genre:'自己啓発',status:'done',pages:296,price:1600,progress:100,rating:4,review:'アドラー心理学が対話形式でわかりやすく。',color:'#8fcfb0',cover:'',tags:['心理学','自己啓発'],start:'2024-03-10',done:'2024-03-25',highlights:[]},
-  {id:4,title:'Clean Code',author:'ロバート・C・マーティン',genre:'技術',status:'reading',pages:431,price:4200,progress:62,rating:0,review:'',color:'#a07ed0',cover:'',tags:['プログラミング'],start:'2024-11-01',done:'',highlights:[]},
-  {id:5,title:'サピエンス全史',author:'ユヴァル・ノア・ハラリ',genre:'歴史',status:'reading',pages:560,price:2400,progress:35,rating:0,review:'',color:'#cf9070',cover:'',tags:['歴史','科学'],start:'2024-12-01',done:'',highlights:[]},
-  {id:6,title:'ノルウェイの森',author:'村上春樹',genre:'小説',status:'want',pages:296,price:700,progress:0,rating:0,review:'',color:'#70a8cf',cover:'',tags:['村上春樹'],start:'',done:'',highlights:[]},
-  {id:7,title:'アトミック・ハビット',author:'ジェームズ・クリアー',genre:'自己啓発',status:'want',pages:320,price:1800,progress:0,rating:0,review:'',color:'#c8a96e',cover:'',tags:['習慣','自己啓発'],start:'',done:'',highlights:[]},
-];
+const SB_URL='https://jzmikfjvumtkofjglegq.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6bWlrZmp2dW10a29mamdsZWdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4OTYyNTIsImV4cCI6MjA4OTQ3MjI1Mn0.qjUHINkbTXDfEnEWTJ9Ce16UX0OR4uGdGB8yALcAj8U';
+const SB_TABLE='papers';
 
-// ── SUPABASE CONFIG ──
-const SUPABASE_URL='https://irtvejpcjoeetohtbmcg.supabase.co';
-const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlydHZlanBjam9lZXRvaHRibWNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzE2MjksImV4cCI6MjA4OTQ0NzYyOX0.boTgiqWFNWqLBRPTblzeGWaV4fJzt5QCQQ3B_cYzJj8';
-const SB_HEADERS={'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY};
-const ROW_ID=1; // single-row strategy: all books stored in one JSON blob
+async function sbFetch(path,opts={}){
+  const res=await fetch(SB_URL+'/rest/v1/'+path,{
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation',...(opts.headers||{})},
+    ...opts
+  });
+  if(!res.ok){const e=await res.text();throw new Error(e);}
+  const t=await res.text();return t?JSON.parse(t):null;
+}
 
-async function sbLoad(){
+function toRow(p){
+  return {id:p.id,title:p.title,author:p.author||'',venue:p.venue||'',year:p.year||'',
+    url:p.url||'',category:p.category||'',tags:p.tags||[],status:p.status||'unread',
+    memo:p.memo||'',ai_summary:p.aiSummary||'',ai_keywords:p.aiKeywords||'',created:p.created,
+    subjects:p.subjects||'',protocol:p.protocol||'',outcomes:p.outcomes||'',
+    statistics:p.statistics||'',discussion:p.discussion||'',quick_note:p.quick_note||''};
+}
+function fromRow(r){
+  return {id:r.id,title:r.title,author:r.author,venue:r.venue,year:r.year,url:r.url,
+    category:r.category,tags:r.tags||[],status:r.status,memo:r.memo||'',
+    aiSummary:r.ai_summary||'',aiKeywords:r.ai_keywords||'',created:r.created,
+    subjects:r.subjects||'',protocol:r.protocol||'',outcomes:r.outcomes||'',
+    statistics:r.statistics||'',discussion:r.discussion||'',quick_note:r.quick_note||''};
+}
+
+let papers=[],selId=null,editId=null,activeTag=null,apiKey='';
+let currentPdfBase64=null;
+
+async function launch(){
+  document.getElementById('setup-screen').style.display='none';
+  document.getElementById('app-screen').classList.add('active');
+  await load();renderAll();
+}
+async function load(){
   try{
-    const res=await fetch(`${SUPABASE_URL}/rest/v1/books?id=eq.${ROW_ID}&select=data`,{headers:SB_HEADERS});
-    const rows=await res.json();
-    if(rows&&rows.length&&rows[0].data){
-      const d=rows[0].data;
-      books=d.books||[];
-      nextId=d.nextId||8;
-      nextHlId=d.nextHlId||100;
-      goalCount=d.goalCount||0;
-      return true;
+    const rows=await sbFetch(SB_TABLE+'?order=created.desc&limit=1000');
+    papers=(rows||[]).map(fromRow);
+    if(!papers.length){
+      const s=[
+        {id:Date.now()-3000,title:'Effect of Resistance Training Volume on Muscle Hypertrophy',author:'Schoenfeld BJ et al.',venue:'J Strength Cond Res',year:'2019',url:'',category:'筋力トレーニング',tags:['RCT','筋肥大','ボリューム'],status:'done',memo:'',aiSummary:'',aiKeywords:'',created:Date.now()-864e5*60,subjects:'健常男性18名（24±3歳）、トレーニング経験2年以上',protocol:'週3回16週間、低ボリューム群(5セット/週) vs 高ボリューム群(15セット/週)\n種目：スクワット、レッグプレスなど',outcomes:'筋断面積: 高ボリューム群 +13.3%, 低ボリューム群 +6.8%（p<0.05）\n筋力（1RM）: 両群で有意な向上',statistics:'2×2 反復測定ANOVA\nCohen\'s d で効果量算出\n有意水準 p<0.05',discussion:'ボリュームと筋肥大に用量反応関係あり\n限界: サンプルサイズが小さい\n実用: 週10セット以上を目安に',quick_note:'ボリュームが多いほど筋肥大は大きい。用量反応関係の基礎論文。'},
+        {id:Date.now()-2000,title:'High-Intensity Interval Training for Cardiovascular Health',author:'Gibala MJ et al.',venue:'Sports Med',year:'2022',url:'',category:'持久力トレーニング',tags:['HIIT','心肺機能','RCT'],status:'reading',memo:'',aiSummary:'',aiKeywords:'',created:Date.now()-864e5*30,subjects:'',protocol:'',outcomes:'',statistics:'',discussion:'',quick_note:'HIITの心肺機能改善効果をレビュー'},
+      ];
+      for(const x of s)await sbFetch(SB_TABLE,{method:'POST',body:JSON.stringify(toRow(x))});
+      papers=s;
     }
-  }catch(e){console.warn('Supabase load error:',e);}
-  return false;
-}
-
-async function sbSave(){
-  try{
-    const payload=JSON.stringify({data:{books,nextId,nextHlId,goalCount}});
-    // upsert: insert if not exists, update if exists
-    await fetch(`${SUPABASE_URL}/rest/v1/books`,{
-      method:'POST',
-      headers:{...SB_HEADERS,'Prefer':'resolution=merge-duplicates'},
-      body:JSON.stringify({id:ROW_ID,data:{books,nextId,nextHlId,goalCount}})
-    });
-  }catch(e){console.warn('Supabase save error:',e);}
-}
-
-// localStorage fallback
-const LS_BOOKS='booktracker_books';
-const LS_META='booktracker_meta';
-function saveLocal(){
-  try{
-    localStorage.setItem(LS_BOOKS,JSON.stringify(books));
-    localStorage.setItem(LS_META,JSON.stringify({nextId,nextHlId,goalCount}));
-  }catch(e){}
-}
-function loadLocal(){
-  try{
-    const saved=localStorage.getItem(LS_BOOKS);
-    const meta=localStorage.getItem(LS_META);
-    if(saved){
-      books=JSON.parse(saved);
-      if(meta){const m=JSON.parse(meta);nextId=m.nextId||nextId;nextHlId=m.nextHlId||nextHlId;goalCount=m.goalCount||0;}
-      return true;
-    }
-  }catch(e){}
-  return false;
-}
-
-// Save to both cloud + local
-async function saveData(){
-  saveLocal();
-  await sbSave();
-}
-
-let books=[];
-let nextId=8,nextHlId=100,currentFilter='all',currentTagFilter='',currentRating=0,pendingTags=[],goalCount=0;
-
-// Show loading indicator
-function showLoading(on){
-  let el=document.getElementById('sync-indicator');
-  if(!el)return;
-  el.textContent=on?'同期中…':'';
-}
-
-// Init: try cloud first, fall back to local, then sample
-async function initData(){
-  showLoading(true);
-  const fromCloud=await sbLoad();
-  if(fromCloud){
-    saveLocal(); // cache locally too
-  } else {
-    const fromLocal=loadLocal();
-    if(!fromLocal){
-      books=[...SAMPLE_BOOKS];
-      await saveData();
-    }
+  }catch(e){
+    document.getElementById('setup-error').style.display='block';
+    document.getElementById('setup-error').textContent='接続エラー: '+e.message;
+    document.getElementById('setup-screen').style.display='flex';
+    document.getElementById('app-screen').classList.remove('active');
   }
-  showLoading(false);
-  renderBooks();
-  renderTagFilter();
-  loadSampleCovers();
+}
+async function save(p){
+  try{await sbFetch(SB_TABLE,{method:'POST',headers:{'Prefer':'resolution=merge-duplicates'},body:JSON.stringify(toRow(p))});}
+  catch(e){console.error('save error',e);}
+}
+async function deleteSb(id){
+  try{await sbFetch(SB_TABLE+'?id=eq.'+id,{method:'DELETE'});}catch(e){console.error(e);}
+}
+function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
+
+function showPage(name,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');btn.classList.add('active');
+  if(name==='dash')renderDash();
+  if(name==='matrix')renderMatrix();
 }
 
-// ── 書籍検索API（国立国会図書館 + Open Library）──
-async function fetchCoverUrl(q){
-  try{
-    const isISBN=/^\d{10,13}$/.test(q.replace(/-/g,''));
-
-    // ① 国立国会図書館APIで検索（日本語の本に強い）
-    const ndlQuery=isISBN
-      ?`isbn=${q.replace(/-/g,'')}`
-      :`title=${encodeURIComponent(q)}`;
-    const ndlRes=await fetch(`https://ndlsearch.ndl.go.jp/api/opensearch?${ndlQuery}&cnt=1`);
-    const ndlText=await ndlRes.text();
-    const parser=new DOMParser();
-    const xml=parser.parseFromString(ndlText,'text/xml');
-    const item=xml.querySelector('item');
-    if(item){
-      const title=item.querySelector('title')?.textContent||'';
-      const author=item.querySelector('author')?.textContent||'';
-      // NDLはISBNを返すので表紙をOpen Libraryから取得
-      const isbnEl=[...xml.querySelectorAll('identifier')].find(el=>el.getAttribute('type')==='dcndl:ISBN');
-      const isbn=isbnEl?.textContent?.replace(/-/g,'');
-      let cover=null;
-      if(isbn){
-        cover=`https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg`;
-      }
-      return{
-        cover,
-        title:title.replace(/\s*\/.*$/,'').trim(),
-        authors:author?[author]:null,
-        pages:null
-      };
-    }
-
-    // ② Open Library（英語の本向け）
-    const olQuery=isISBN
-      ?`https://openlibrary.org/api/books?bibkeys=ISBN:${q.replace(/-/g,'')}&format=json&jscmd=data`
-      :`https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=1`;
-    const olRes=await fetch(olQuery);
-    const olData=await olRes.json();
-    if(isISBN){
-      const key=`ISBN:${q.replace(/-/g,'')}`;
-      if(olData[key]){
-        const info=olData[key];
-        const cover=info.cover?info.cover.large||info.cover.medium:null;
-        return{cover,title:info.title,authors:info.authors?.map(a=>a.name)||null,pages:info.number_of_pages||null};
-      }
-    } else {
-      if(olData.docs&&olData.docs[0]){
-        const doc=olData.docs[0];
-        const cover=doc.cover_i?`https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg`:null;
-        return{cover,title:doc.title,authors:doc.author_name||null,pages:doc.number_of_pages_median||null};
-      }
-    }
-  }catch(e){console.warn('検索エラー:',e);}
-  return null;
-}
-
-async function searchBook(){
-  const q=document.getElementById('f-isbn').value.trim();
-  if(!q)return;
-  const btn=document.getElementById('srch-btn');
-  btn.textContent='検索中…';btn.disabled=true;
-  const r=await fetchCoverUrl(q);
-  btn.textContent='検索';btn.disabled=false;
-  if(r){
-    if(r.title)document.getElementById('f-title').value=r.title;
-    if(r.authors)document.getElementById('f-author').value=r.authors.join(', ');
-    if(r.pages)document.getElementById('f-pages').value=r.pages;
-    if(r.cover)document.getElementById('f-cover').value=r.cover;
-    const w=document.getElementById('cprev');
-    if(r.cover){
-      document.getElementById('cprev-img').src=r.cover;
-      document.getElementById('cprev-title').textContent=r.title||'';
-      document.getElementById('cprev-sub').textContent=r.authors?r.authors.join(', '):'';
-      w.classList.add('show');
-    }else w.classList.remove('show');
-  }else alert('見つかりませんでした。タイトルを直接入力してください。');
-}
-
-// ── TAGS ──
-function addPendingTag(){
-  const inp=document.getElementById('f-tag-in');
-  const v=inp.value.trim();
-  if(!v||pendingTags.includes(v))return;
-  pendingTags.push(v);
-  inp.value='';
-  renderPendingTags();
-}
-function removePendingTag(t){pendingTags=pendingTags.filter(x=>x!==t);renderPendingTags();}
-function renderPendingTags(){
-  document.getElementById('pending-tags').innerHTML=pendingTags.map(t=>
-    `<span class="ptag">${t}<span class="ptag-x" onclick="removePendingTag('${t}')">✕</span></span>`
-  ).join('');
-}
-
-function getAllTags(){
-  const s=new Set();books.forEach(b=>b.tags.forEach(t=>s.add(t)));
-  return[...s].sort();
-}
-function renderTagFilter(){
-  const tags=getAllTags();
-  const el=document.getElementById('tag-filter');
-  if(!tags.length){el.innerHTML='';return;}
-  el.innerHTML='<span style="font-size:11px;color:var(--muted);margin-right:2px;">タグ:</span>'+
-    tags.map(t=>`<button class="tag-pill ${currentTagFilter===t?'active':''}" onclick="setTagFilter('${t}',this)">${t}</button>`).join('');
-}
-function setTagFilter(t,el){
-  currentTagFilter=currentTagFilter===t?'':t;
-  renderTagFilter();renderBooks();
-}
-function setStatusFilter(f,el){
-  currentFilter=f;
-  document.querySelectorAll('#status-filter .pill').forEach(p=>p.classList.remove('active'));
-  el.classList.add('active');
-  renderBooks();
-}
-
-// ── RENDER BOOKS ──
-function renderBooks(){
-  const grid=document.getElementById('book-grid');
-  const q=(document.getElementById('search-q').value||'').toLowerCase();
+function getFiltered(){
+  const q=document.getElementById('search-input').value.toLowerCase();
+  const st=document.getElementById('filter-status').value;
+  const cat=document.getElementById('filter-cat').value;
   const sort=document.getElementById('sort-sel').value;
-  let list=books.filter(b=>{
-    if(currentFilter!=='all'&&b.status!==currentFilter)return false;
-    if(currentTagFilter&&!b.tags.includes(currentTagFilter))return false;
-    if(q&&!b.title.toLowerCase().includes(q)&&!b.author.toLowerCase().includes(q))return false;
+  let list=papers.filter(p=>{
+    if(st&&p.status!==st)return false;
+    if(cat&&p.category!==cat)return false;
+    if(activeTag&&!(p.tags||[]).includes(activeTag))return false;
+    if(q){const h=(p.title+' '+p.author+' '+(p.memo||'')+' '+(p.quick_note||'')+' '+(p.tags||[]).join(' ')).toLowerCase();if(!h.includes(q))return false;}
     return true;
   });
-  list=[...list].sort((a,b2)=>{
-    if(sort==='title')return a.title.localeCompare(b2.title,'ja');
-    if(sort==='rating')return b2.rating-a.rating;
-    if(sort==='pages')return b2.pages-a.pages;
-    if(sort==='date_done')return(b2.done||'').localeCompare(a.done||'');
-    return b2.id-a.id;
+  return list.sort((a,b)=>sort==='date-asc'?a.created-b.created:sort==='date-desc'?b.created-a.created:sort==='title'?a.title.localeCompare(b.title,'ja'):({unread:0,reading:1,done:2}[a.status]-{unread:0,reading:1,done:2}[b.status]));
+}
+function renderAll(){renderStats();renderFilters();renderList();}
+function renderMatrix(){
+  const cats=[...new Set(papers.map(p=>p.category).filter(Boolean))].sort();
+  const mc=document.getElementById('matrix-cat-filter');
+  const mcv=mc.value;
+  mc.innerHTML='<option value="">すべてのカテゴリ</option>'+cats.map(c=>`<option value="${esc(c)}"${c===mcv?' selected':''}>${esc(c)}</option>`).join('');
+  const catF=mc.value;
+  const stF=document.getElementById('matrix-status-filter').value;
+  const colF=document.getElementById('matrix-col-filter').value;
+  let list=papers.filter(p=>{
+    if(catF&&p.category!==catF)return false;
+    if(stF&&p.status!==stF)return false;
+    return true;
   });
-  if(!list.length){
-    grid.innerHTML='<div class="empty-state"><div class="empty-icon">📚</div><div style="font-size:14px;color:var(--muted);">該当する本がありません。</div></div>';
-    return;
+  document.getElementById('matrix-count').textContent=list.length+' 件';
+  const mb=document.getElementById('matrix-body');
+  if(!list.length){mb.innerHTML='<div style="text-align:center;padding:48px;color:var(--text3);font-size:13px">論文がありません</div>';return;}
+  const sl={unread:'未読',reading:'読書中',done:'読了'};
+  const sc={unread:'s-unread',reading:'s-reading',done:'s-done'};
+  if(catF){
+    mb.innerHTML='<div style="overflow-x:auto">'+renderMatrixTable(list,sl,sc,colF)+'</div>';
+  }else{
+    const grouped={};
+    list.forEach(p=>{const c=p.category||'未分類';if(!grouped[c])grouped[c]=[];grouped[c].push(p);});
+    mb.innerHTML=Object.keys(grouped).sort().map(cat=>
+      '<div class="matrix-section">'+
+      '<div class="matrix-cat-header">'+
+      '<span class="matrix-cat-name">'+esc(cat)+'</span>'+
+      '<span class="matrix-cat-count">'+grouped[cat].length+' 件</span>'+
+      '</div>'+
+      '<div style="overflow-x:auto">'+renderMatrixTable(grouped[cat],sl,sc,colF)+'</div>'+
+      '</div>'
+    ).join('');
   }
-  grid.innerHTML=list.map(b=>`
-    <div class="book-card" onclick="openModal(${b.id})">
-      <div class="book-cover" style="background:${b.color}22;">
-        ${b.cover?`<img src="${b.cover}" alt="${b.title}" onerror="this.style.display='none'" loading="lazy">`:`<div class="cover-ph" style="color:${b.color};">${b.title}</div>`}
-        <div class="status-dot ${b.status}"></div>
-      </div>
-      <div class="book-info">
-        <div class="book-title">${b.title}</div>
-        <div class="book-author">${b.author||'著者不明'}</div>
-        <span class="genre-badge gb-${b.genre}">${b.genre}</span>
-        ${b.tags.length?`<div class="book-tags">${b.tags.slice(0,2).map(t=>`<span class="btag">${t}</span>`).join('')}</div>`:''}
-        ${b.rating>0?`<div class="stars">${[...Array(5)].map((_,i)=>`<span class="star ${i<b.rating?'f':'e'}">★</span>`).join('')}</div>`:''}
-        ${b.status==='reading'?`<div class="prog-wrap"><div class="prog-bar"><div class="prog-fill" style="width:${b.progress}%"></div></div><div class="prog-lbl">${b.progress}%</div></div>`:''}
-      </div>
-    </div>
-  `).join('');
 }
-
-// ── STATS ──
-function setGoal(){
-  const v=parseInt(document.getElementById('goal-input').value);
-  if(!v||v<1)return;
-  goalCount=v;
-  saveData();
-  document.getElementById('goal-input').value='';
-  updateGoal();
+const ALL_COLS=[
+  {key:'subjects',label:'対象者・参加者',color:'var(--blue)'},
+  {key:'protocol',label:'介入プロトコル',color:'var(--purple)'},
+  {key:'outcomes',label:'主な結果',color:'var(--accent)'},
+  {key:'statistics',label:'統計解析',color:'var(--yellow)'},
+  {key:'discussion',label:'考察・限界',color:'var(--orange)'},
+  {key:'quick_note',label:'一言メモ',color:'var(--text2)'},
+];
+function renderMatrixTable(list,sl,sc,colF){
+  const cols=colF==='all'?ALL_COLS:ALL_COLS.filter(c=>c.key===colF);
+  const minW=(200+cols.length*220)+'px';
+  const thead='<thead><tr><th class="col-title" style="width:200px">論文</th>'+
+    cols.map(c=>'<th class="col-data" style="width:220px"><span style="color:'+c.color+'">'+c.label+'</span></th>').join('')+
+    '</tr></thead>';
+  const tbody='<tbody>'+list.map(p=>{
+    const tds=cols.map(c=>{
+      const val=p[c.key]||'';
+      return '<td class="col-data"><div class="matrix-cell'+(val?'':' matrix-empty')+'">'+(val?esc(val):'—')+'</div></td>';
+    }).join('');
+    return '<tr onclick="openDetailFromMatrix('+p.id+')">'+
+      '<td class="col-title">'+
+      '<div style="font-weight:500;font-size:12px;line-height:1.45;margin-bottom:5px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">'+esc(p.title)+'</div>'+
+      '<div style="font-size:10px;color:var(--text3);margin-bottom:6px">'+esc([p.author,p.year].filter(Boolean).join(' · '))+'</div>'+
+      '<span class="sb '+sc[p.status]+'" style="font-size:10px">'+sl[p.status]+'</span>'+
+      '</td>'+tds+'</tr>';
+  }).join('')+'</tbody>';
+  return '<table class="matrix-table" style="min-width:'+minW+'">'+thead+tbody+'</table>';
 }
-function updateGoal(){
-  const doneCount=books.filter(b=>b.status==='done').length;
-  if(!goalCount){
-    document.getElementById('goal-display').textContent='未設定';
-    document.getElementById('goal-pct').textContent='目標冊数を設定してください';
-    document.getElementById('goal-fill').style.width='0%';
-    document.getElementById('goal-progress-lbl').textContent=`読了 ${doneCount} 冊`;
-    return;
-  }
-  const pct=Math.min(100,Math.round(doneCount/goalCount*100));
-  document.getElementById('goal-display').textContent=goalCount+' 冊';
-  document.getElementById('goal-progress-lbl').textContent=`読了 ${doneCount} / ${goalCount} 冊`;
-  document.getElementById('goal-fill').style.width=pct+'%';
-  document.getElementById('goal-pct').textContent=pct+'% 達成';
-}
+function openDetailFromMatrix(id){openDetail(id);}
 function renderStats(){
-  updateGoal();
-  const done=books.filter(b=>b.status==='done');
-  const totalP=books.reduce((s,b)=>s+(b.pages||0),0);
-  const totalC=books.reduce((s,b)=>s+(b.price||0),0);
-  const rated=done.filter(b=>b.rating>0);
-  const avg=rated.length?(rated.reduce((s,b)=>s+b.rating,0)/rated.length).toFixed(1):'—';
-  document.getElementById('s-done').textContent=done.length;
-  document.getElementById('s-pages').textContent=totalP.toLocaleString();
-  document.getElementById('s-cost').textContent='¥'+totalC.toLocaleString();
-  document.getElementById('s-rating').textContent=avg;
-  const genres={};
-  books.forEach(b=>{genres[b.genre]=(genres[b.genre]||0)+1;});
-  const maxG=Math.max(...Object.values(genres),1);
-  document.getElementById('c-genre').innerHTML=Object.entries(genres).map(([g,n],i)=>
-    `<div class="bar-col"><div class="bar-fill" style="height:${Math.round(n/maxG*100)}%;background:${COLORS[i%COLORS.length]};"></div><div class="bar-lbl">${g}</div></div>`
-  ).join('');
-  const sL={done:'読了',reading:'読中',want:'読みたい'};
-  const sC={done:'#8fcfb0',reading:'#7e9fd0',want:'#a07ed0'};
-  const sCt={done:0,reading:0,want:0};
-  books.forEach(b=>sCt[b.status]++);
-  const maxS=Math.max(...Object.values(sCt),1);
-  document.getElementById('c-status').innerHTML=Object.entries(sCt).map(([s,n])=>
-    `<div class="bar-col"><div class="bar-fill" style="height:${Math.round(n/maxS*100)}%;background:${sC[s]};"></div><div class="bar-lbl">${sL[s]}</div></div>`
-  ).join('');
+  document.getElementById('stats-sb').innerHTML=[['合計',papers.length],['読了',papers.filter(p=>p.status==='done').length],['読書中',papers.filter(p=>p.status==='reading').length],['未読',papers.filter(p=>p.status==='unread').length]].map(([l,n])=>`<div class="stat"><div class="stat-num">${n}</div><div class="stat-lbl">${l}</div></div>`).join('');
+}
+function renderFilters(){
+  const cs=document.getElementById('filter-cat'),cv=cs.value;
+  cs.innerHTML='<option value="">すべて</option>'+[...new Set(papers.map(p=>p.category).filter(Boolean))].sort().map(c=>`<option value="${esc(c)}"${c===cv?' selected':''}>${esc(c)}</option>`).join('');
+  document.getElementById('tag-cloud').innerHTML=[...new Set(papers.flatMap(p=>p.tags||[]))].sort().map(t=>`<button class="tag-btn${t===activeTag?' active':''}" onclick="toggleTag('${t.replace(/'/g,"\\'")}')">${esc(t)}</button>`).join('');
+}
+function toggleTag(t){activeTag=activeTag===t?null:t;renderAll();}
+function renderList(){
+  const list=getFiltered(),el=document.getElementById('paper-list');
+  if(!list.length){el.innerHTML='<div class="empty">論文が見つかりません<br><span style="font-size:12px;color:var(--text3)">「+ 追加」から登録してください</span></div>';return;}
+  el.innerHTML=list.map(p=>{
+    const sc={unread:'s-unread',reading:'s-reading',done:'s-done'}[p.status];
+    const sl={unread:'未読',reading:'読書中',done:'読了'}[p.status];
+    const tags=(p.tags||[]).map(t=>`<span class="tg">${esc(t)}</span>`).join('');
+    return `<div class="pc${p.id===selId?' sel':''}" onclick="openDetail(${p.id})">
+      <div class="ph"><div class="pt">${esc(p.title)}</div><span class="sb ${sc}">${sl}</span></div>
+      <div class="pm">${esc([p.author,p.venue,p.year].filter(Boolean).join(' · '))}</div>
+      <div class="pt-row">${tags}${p.url?'<span class="pdf-badge">PDF</span>':''}</div>
+      ${p.quick_note?`<div class="pnp">${esc(p.quick_note)}</div>`:''}
+    </div>`;
+  }).join('');
 }
 
-// ── MODAL ──
-let activeModalTab='info';
-function openModal(id){
-  const b=books.find(x=>x.id===id);if(!b)return;
-  activeModalTab='info';
-  renderModalContent(b);
-  document.getElementById('modal').classList.add('open');
+/* NOTE BLOCKS CONFIG */
+const NOTE_BLOCKS=[
+  {key:'subjects',label:'対象者・参加者',color:'var(--blue)'},
+  {key:'protocol',label:'介入プロトコル',color:'var(--purple)'},
+  {key:'outcomes',label:'主な結果・アウトカム',color:'var(--accent)'},
+  {key:'statistics',label:'統計解析',color:'var(--yellow)'},
+  {key:'discussion',label:'考察・限界・実用指標',color:'var(--orange)',full:true},
+];
+
+function openDetail(id){
+  selId=id;const p=papers.find(x=>x.id===id);if(!p)return;
+  document.getElementById('d-title').textContent=p.title;
+  document.getElementById('d-meta').textContent=[p.author,p.venue,p.year].filter(Boolean).join(' · ');
+  const sc={unread:'s-unread',reading:'s-reading',done:'s-done'}[p.status];
+  const sl={unread:'未読',reading:'読書中',done:'読了'}[p.status];
+  document.getElementById('d-tags').innerHTML=`<span class="sb ${sc}">${sl}</span>${(p.tags||[]).map(t=>`<span class="tg">${esc(t)}</span>`).join('')}${p.category?`<span class="tg">${esc(p.category)}</span>`:''}`;
+
+  // quick note
+  const qw=document.getElementById('d-quick-note-wrap');
+  if(p.quick_note){qw.style.display='block';qw.textContent=p.quick_note;}else qw.style.display='none';
+
+  // PDF
+  const ps=document.getElementById('pdf-url-section');
+  if(p.url){ps.style.display='';document.getElementById('d-pdf-url-text').textContent=p.url.length>55?p.url.slice(0,55)+'...':p.url;document.getElementById('d-pdf-link').href=p.url;}
+  else ps.style.display='none';
+
+  // Structured notes
+  const ng=document.getElementById('d-notes-grid');
+  ng.innerHTML=NOTE_BLOCKS.map(b=>{
+    const val=p[b.key]||'';
+    return `<div class="note-block${b.full?' full':''}">
+      <div class="note-label"><div class="note-label-dot" style="background:${b.color}"></div><span style="color:${b.color}">${b.label}</span></div>
+      <div class="note-content${!val?' note-empty':''}">${val?esc(val):'未記入'}</div>
+    </div>`;
+  }).join('');
+
+  // AI
+  const ab=document.getElementById('ai-box');
+  if(p.aiSummary){ab.style.display='block';ab.className='ai-box';ab.innerHTML=`<strong style="font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px">キーワード</strong>\n${esc(p.aiKeywords)}\n\n<strong style="font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px">要約</strong>\n${esc(p.aiSummary)}`;}
+  else{ab.style.display='none';}
+
+  clearPdfFile();document.getElementById('pdf-ai-box').style.display='none';document.getElementById('rec-area').innerHTML='';
+  document.getElementById('detail-overlay').classList.add('open');renderList();
 }
-function renderModalContent(b){
-  const sM={done:'読了',reading:'読中',want:'読みたい'};
-  const coverHtml=b.cover
-    ?`<img class="modal-cimg" src="${b.cover}" onerror="this.style.display='none'">`
-    :`<div class="modal-cph" style="background:${b.color}22;color:${b.color};">${b.title}</div>`;
-  const tagsHtml=b.tags.length?`<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;">${b.tags.map(t=>`<span class="ptag">${t}</span>`).join('')}</div>`:'';
-  const hlHtml=renderHighlights(b);
-  document.getElementById('modal-content').innerHTML=`
-    <div class="modal-top">
-      ${coverHtml}
-      <div style="flex:1;min-width:0;">
-        <div class="modal-btitle">${b.title}</div>
-        <div class="modal-author">${b.author||'著者不明'}</div>
-        <span class="sbadge sb-${b.status}">${sM[b.status]}</span>
-        ${tagsHtml}
-        <div class="modal-meta">
-          ${b.pages?`<div class="mi">ページ数 <span class="mv">${b.pages.toLocaleString()}</span></div>`:''}
-          ${b.price?`<div class="mi">価格 <span class="mv">¥${b.price.toLocaleString()}</span></div>`:''}
-          ${b.genre?`<div class="mi">ジャンル <span class="mv">${b.genre}</span></div>`:''}
+function closeDetail(){document.getElementById('detail-overlay').classList.remove('open');selId=null;clearPdfFile();renderList();}
+async function deletePaperFromDetail(){if(!selId||!confirm('この論文を削除しますか？'))return;await deleteSb(selId);papers=papers.filter(p=>p.id!==selId);closeDetail();renderAll();}
+function editFromDetail(){const p=papers.find(x=>x.id===selId);if(!p)return;closeDetail();openEditModal(p);}
+
+/* PDF VIEWER */
+function openPdfViewer(){const p=papers.find(x=>x.id===selId);if(!p||!p.url)return;document.getElementById('pdf-viewer-title').textContent=p.title;document.getElementById('pdf-open-link').href=p.url;document.getElementById('pdf-iframe').src=p.url;document.getElementById('pdf-viewer').classList.add('open');}
+function closePdfViewer(){document.getElementById('pdf-viewer').classList.remove('open');document.getElementById('pdf-iframe').src='';}
+
+/* PDF UPLOAD */
+const dropZone=document.getElementById('pdf-drop');
+dropZone.addEventListener('dragover',e=>{e.preventDefault();dropZone.classList.add('drag');});
+dropZone.addEventListener('dragleave',()=>dropZone.classList.remove('drag'));
+dropZone.addEventListener('drop',e=>{e.preventDefault();dropZone.classList.remove('drag');const f=e.dataTransfer.files[0];if(f&&f.type==='application/pdf')loadPdfFile(f);});
+function onPdfFileSelect(e){const f=e.target.files[0];if(f)loadPdfFile(f);}
+function loadPdfFile(file){
+  document.getElementById('pdf-file-name').textContent=file.name+' ('+Math.round(file.size/1024)+'KB)';
+  document.getElementById('pdf-file-info').style.display='flex';
+  document.getElementById('pdf-drop').style.display='none';
+  const reader=new FileReader();reader.onload=e=>{currentPdfBase64=e.target.result.split(',')[1];};reader.readAsDataURL(file);
+}
+function clearPdfFile(){currentPdfBase64=null;document.getElementById('pdf-file-info').style.display='none';document.getElementById('pdf-drop').style.display='';document.getElementById('pdf-file-input').value='';}
+
+/* AI */
+async function callClaude(messages){
+  if(!apiKey){alert('AI機能にはAPIキーが必要です。');return null;}
+  const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,messages})});
+  if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'APIエラー');}
+  return(await res.json()).content.map(c=>c.text||'').join('');
+}
+async function runPdfAI(mode){
+  if(!currentPdfBase64){alert('PDFファイルを先に選択してください。');return;}
+  const p=papers.find(x=>x.id===selId);
+  const box=document.getElementById('pdf-ai-box');
+  box.style.display='block';box.className='ai-box ai-loading';
+  box.textContent=mode==='summary'?'PDFを読み込み中...':'書誌情報を抽出中...';
+  [document.getElementById('pdf-ai-btn'),document.getElementById('pdf-ai-btn2')].forEach(b=>b.disabled=true);
+  const prompt=mode==='summary'
+    ?'この論文PDFを読み日本語で回答してください。\nキーワード: [5〜8個、カンマ区切り]\n要約: [3〜5文で貢献・手法・結果を説明]\n形式通りのみ出力してください。'
+    :'この論文PDFから書誌情報をJSON形式のみで回答してください:\n{"title":"","author":"","venue":"","year":"","category":"","tags":[]}';
+  try{
+    const text=await callClaude([{role:'user',content:[{type:'document',source:{type:'base64',media_type:'application/pdf',data:currentPdfBase64}},{type:'text',text:prompt}]}]);
+    if(!text)return;
+    if(mode==='summary'){
+      const kw=(text.match(/キーワード[:：]\s*(.+)/)||[])[1]?.trim()||'';
+      const sum=(text.match(/要約[:：]\s*([\s\S]+)/)||[])[1]?.trim()||text;
+      if(p){p.aiSummary=sum;p.aiKeywords=kw;save(p);}
+      const ab=document.getElementById('ai-box');ab.style.display='block';ab.className='ai-box';
+      ab.innerHTML=`<strong style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px">キーワード</strong>\n${esc(kw)}\n\n<strong style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px">要約</strong>\n${esc(sum)}`;
+      box.className='ai-box';box.innerHTML=`<span style="color:var(--accent)">✓ PDFから生成しました</span>`;
+    }else{
+      let info={};try{info=JSON.parse(text.replace(/```json|```/g,'').trim());}catch(e){}
+      if(p){if(info.title&&!p.title)p.title=info.title;if(info.author&&!p.author)p.author=info.author;if(info.venue&&!p.venue)p.venue=info.venue;if(info.year&&!p.year)p.year=info.year;if(info.category&&!p.category)p.category=info.category;if(info.tags?.length&&!p.tags?.length)p.tags=info.tags;save(p);renderAll();}
+      box.className='ai-box';box.innerHTML=`<span style="color:var(--accent)">✓ 書誌情報を反映しました</span>`;
+    }
+  }catch(e){box.className='ai-box';box.textContent='エラー: '+e.message;}
+  [document.getElementById('pdf-ai-btn'),document.getElementById('pdf-ai-btn2')].forEach(b=>b.disabled=false);
+}
+async function runAI(){
+  const p=papers.find(x=>x.id===selId);if(!p)return;
+  const btn=document.getElementById('ai-btn'),ab=document.getElementById('ai-box');
+  btn.disabled=true;btn.textContent='生成中...';
+  ab.style.display='block';ab.className='ai-box ai-loading';ab.textContent='生成中...';
+  try{
+    const text=await callClaude([{role:'user',content:`以下の論文について日本語で。\nタイトル: ${p.title}\n著者: ${p.author||'不明'}\n掲載先: ${p.venue||''} ${p.year||''}\nタグ: ${(p.tags||[]).join(', ')}\n\nキーワード: [5〜8個、カンマ区切り]\n要約: [3〜5文]`}]);
+    if(!text)return;
+    const kw=(text.match(/キーワード[:：]\s*(.+)/)||[])[1]?.trim()||'';
+    const sum=(text.match(/要約[:：]\s*([\s\S]+)/)||[])[1]?.trim()||text;
+    p.aiSummary=sum;p.aiKeywords=kw;save(p);
+    ab.className='ai-box';ab.innerHTML=`<strong style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px">キーワード</strong>\n${esc(kw)}\n\n<strong style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px">要約</strong>\n${esc(sum)}`;
+  }catch(e){ab.className='ai-box';ab.textContent='エラー: '+e.message;}
+  btn.disabled=false;btn.textContent='再生成';
+}
+async function runRec(){
+  const p=papers.find(x=>x.id===selId);if(!p)return;
+  const ra=document.getElementById('rec-area');
+  ra.innerHTML='<div class="ai-loading" style="font-size:12px;padding:8px 0;color:var(--text3)">関連論文を検索中...</div>';
+  const others=papers.filter(x=>x.id!==selId).map(x=>`- ${x.title} (タグ: ${(x.tags||[]).join(', ')})`).join('\n');
+  if(!others){ra.innerHTML='<div style="font-size:12px;color:var(--text3);padding:6px 0">他の論文がありません。</div>';return;}
+  try{
+    const text=await callClaude([{role:'user',content:`論文「${p.title}」(タグ: ${(p.tags||[]).join(', ')}) に関連する論文を推薦してください。\n\n登録済み:\n${others}\n\n最大3件をJSON形式のみで:\n[{"title":"...","reason":"1文"}]`}]);
+    if(!text)return;
+    let recs=[];try{recs=JSON.parse(text.replace(/```json|```/g,'').trim());}catch(e){}
+    if(!recs.length){ra.innerHTML='<div style="font-size:12px;color:var(--text3);padding:6px 0">関連論文が見つかりませんでした。</div>';return;}
+    ra.innerHTML=recs.map(r=>{const found=papers.find(x=>x.title===r.title);return `<div class="rec-card" onclick="${found?`openRecPaper(${found.id})`:''}" style="${!found?'cursor:default':''}"><div class="rec-title">${esc(r.title)}</div><div class="rec-reason">${esc(r.reason)}</div>${found?`<div style="display:flex;gap:3px;flex-wrap:wrap;margin-top:5px">${(found.tags||[]).map(t=>`<span class="tg">${esc(t)}</span>`).join('')}</div>`:''}</div>`;}).join('');
+  }catch(e){ra.innerHTML=`<div style="font-size:12px;color:var(--red);padding:6px 0">${esc(e.message)}</div>`;}
+}
+function openRecPaper(id){closeDetail();setTimeout(()=>openDetail(id),100);}
+
+/* LOOKUP */
+let lookupMode='doi';
+function switchTab(mode){
+  lookupMode=mode;
+  document.getElementById('tab-doi').classList.toggle('active',mode==='doi');
+  document.getElementById('tab-pm').classList.toggle('active',mode==='pm');
+  const inp=document.getElementById('f-lookup-input');
+  const hint=document.getElementById('lookup-hint');
+  if(mode==='doi'){inp.placeholder='10.1519/... または https://doi.org/...';hint.innerHTML='DOI例: <code>10.1519/JSC.0000000000004000</code>';}
+  else{inp.placeholder='33278358 または https://pubmed.ncbi.nlm.nih.gov/33278358/';hint.innerHTML='PMID例: <code>33278358</code> またはPubMed URL';}
+  document.getElementById('lookup-status').style.display='none';
+}
+function fillFields(info){
+  if(info.title)document.getElementById('f-title').value=info.title;
+  if(info.author)document.getElementById('f-author').value=info.author;
+  if(info.venue)document.getElementById('f-venue').value=info.venue;
+  if(info.year)document.getElementById('f-year').value=String(info.year);
+  if(info.url&&!document.getElementById('f-url').value)document.getElementById('f-url').value=info.url;
+  if(info.category&&!document.getElementById('f-category').value)document.getElementById('f-category').value=info.category;
+  if(info.tags&&!document.getElementById('f-tags').value)document.getElementById('f-tags').value=info.tags;
+  if(info.memo&&!document.getElementById('f-quick_note').value)document.getElementById('f-quick_note').value=info.memo;
+}
+async function fetchLookup(){
+  const raw=document.getElementById('f-lookup-input').value.trim();
+  if(!raw){alert('IDまたはURLを入力してください');return;}
+  const btn=document.getElementById('lookup-fetch-btn');
+  const status=document.getElementById('lookup-status');
+  btn.disabled=true;btn.textContent='取得中...';
+  status.style.display='block';status.style.color='var(--blue)';
+  if(lookupMode==='doi'){
+    const doi=raw.replace(/^https?:\/\/(dx\.)?doi\.org\//i,'').trim();
+    status.textContent='CrossRef APIに問い合わせ中...';
+    try{
+      const res=await fetch('https://api.crossref.org/works/'+encodeURIComponent(doi));
+      if(!res.ok)throw new Error(res.status===404?'DOIが見つかりません':'エラー '+res.status);
+      const w=(await res.json()).message;
+      fillFields({title:(w.title||[])[0]||'',author:(w.author||[]).map(a=>[a.family,a.given].filter(Boolean).join(' ')).join(', '),venue:(w['container-title']||[])[0]||'',year:((w.published?.['date-parts']||w['published-print']?.['date-parts']||[])[0]||[])[0],url:'https://doi.org/'+doi,category:(w.subject||[])[0]||'',tags:(w.subject||[]).slice(0,5).join(', ')});
+      status.style.color='var(--accent)';status.textContent='✓ 取得しました';
+    }catch(e){status.style.color='var(--red)';status.textContent='✕ '+e.message;}
+  }else{
+    let pmid=raw.replace(/^https?:\/\/pubmed\.ncbi\.nlm\.nih\.gov\//i,'').replace(/[\/?#].*/,'').trim();
+    if(!pmid||!/^\d+$/.test(pmid)){status.style.color='var(--red)';status.textContent='✕ PMIDを正しく入力してください';btn.disabled=false;btn.textContent='取得';return;}
+    status.textContent='NCBI E-utilities APIに問い合わせ中...';
+    try{
+      const sumRes=await fetch('https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id='+pmid+'&retmode=json');
+      if(!sumRes.ok)throw new Error('PubMed APIエラー');
+      const art=(await sumRes.json()).result?.[pmid];
+      if(!art||art.error)throw new Error('PMID '+pmid+' が見つかりません');
+      const doiId=(art.articleids||[]).find(x=>x.idtype==='doi');
+      let abstract='';
+      try{const abRes=await fetch('https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id='+pmid+'&rettype=abstract&retmode=text');const abText=await abRes.text();const m=abText.match(/Abstract\n([\s\S]+?)(?=\n\n[A-Z]|Copyright|Author information|\nPMID)/i);if(m)abstract=m[1].replace(/\n/g,' ').trim().slice(0,400)+(m[1].length>400?'...':'');}catch(e){}
+      fillFields({title:art.title||'',author:(art.authors||[]).map(a=>a.name).join(', '),venue:art.source||'',year:(art.pubdate||'').match(/\d{4}/)?.[0]||'',url:doiId?'https://doi.org/'+doiId.value:'https://pubmed.ncbi.nlm.nih.gov/'+pmid+'/',memo:abstract});
+      status.style.color='var(--accent)';status.textContent='✓ PubMedから取得しました'+(abstract?' アブストラクトを一言メモに追加':'');
+    }catch(e){status.style.color='var(--red)';status.textContent='✕ '+e.message;}
+  }
+  btn.disabled=false;btn.textContent='取得';
+}
+
+/* ADD/EDIT */
+function openAdd(){editId=null;clearForm();document.getElementById('modal-label').textContent='論文を追加';document.getElementById('del-btn').style.display='none';document.getElementById('add-overlay').classList.add('open');}
+function closeAdd(){document.getElementById('add-overlay').classList.remove('open');editId=null;}
+function openEditModal(p){
+  editId=p.id;document.getElementById('modal-label').textContent='論文を編集';document.getElementById('del-btn').style.display='';
+  document.getElementById('f-title').value=p.title||'';document.getElementById('f-author').value=p.author||'';
+  document.getElementById('f-venue').value=p.venue||'';document.getElementById('f-year').value=p.year||'';
+  document.getElementById('f-url').value=p.url||'';document.getElementById('f-category').value=p.category||'';
+  document.getElementById('f-tags').value=(p.tags||[]).join(', ');document.getElementById('f-status').value=p.status||'unread';
+  document.getElementById('f-quick_note').value=p.quick_note||'';
+  document.getElementById('f-subjects').value=p.subjects||'';document.getElementById('f-protocol').value=p.protocol||'';
+  document.getElementById('f-outcomes').value=p.outcomes||'';document.getElementById('f-statistics').value=p.statistics||'';
+  document.getElementById('f-discussion').value=p.discussion||'';
+  document.getElementById('add-overlay').classList.add('open');
+}
+function clearForm(){
+  ['f-title','f-author','f-venue','f-year','f-url','f-category','f-tags','f-quick_note','f-subjects','f-protocol','f-outcomes','f-statistics','f-discussion'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-status').value='unread';
+  document.getElementById('f-lookup-input').value='';
+  document.getElementById('lookup-status').style.display='none';
+}
+async function savePaper(){
+  const title=document.getElementById('f-title').value.trim();if(!title){alert('タイトルは必須です');return;}
+  const tags=document.getElementById('f-tags').value.split(',').map(t=>t.trim()).filter(Boolean);
+  let paper;
+  if(editId){
+    paper=papers.find(x=>x.id===editId);
+    if(paper){
+      paper.title=title;paper.author=document.getElementById('f-author').value.trim();paper.venue=document.getElementById('f-venue').value.trim();paper.year=document.getElementById('f-year').value.trim();paper.url=document.getElementById('f-url').value.trim();paper.category=document.getElementById('f-category').value.trim();paper.tags=tags;paper.status=document.getElementById('f-status').value;paper.quick_note=document.getElementById('f-quick_note').value.trim();
+      paper.subjects=document.getElementById('f-subjects').value.trim();paper.protocol=document.getElementById('f-protocol').value.trim();paper.outcomes=document.getElementById('f-outcomes').value.trim();paper.statistics=document.getElementById('f-statistics').value.trim();paper.discussion=document.getElementById('f-discussion').value.trim();
+    }
+  }else{
+    paper={id:Date.now(),title,author:document.getElementById('f-author').value.trim(),venue:document.getElementById('f-venue').value.trim(),year:document.getElementById('f-year').value.trim(),url:document.getElementById('f-url').value.trim(),category:document.getElementById('f-category').value.trim(),tags,status:document.getElementById('f-status').value,quick_note:document.getElementById('f-quick_note').value.trim(),subjects:document.getElementById('f-subjects').value.trim(),protocol:document.getElementById('f-protocol').value.trim(),outcomes:document.getElementById('f-outcomes').value.trim(),statistics:document.getElementById('f-statistics').value.trim(),discussion:document.getElementById('f-discussion').value.trim(),memo:'',created:Date.now(),aiSummary:'',aiKeywords:''};
+  }
+  await save(paper);
+  if(!editId)papers.unshift(paper);
+  closeAdd();renderAll();
+}
+async function deletePaper(){if(!editId||!confirm('削除しますか？'))return;await deleteSb(editId);papers=papers.filter(p=>p.id!==editId);closeAdd();renderAll();}
+
+/* DASHBOARD */
+function renderDash(){
+  const db=document.getElementById('dash-body');
+  const total=papers.length,done=papers.filter(p=>p.status==='done').length,reading=papers.filter(p=>p.status==='reading').length,unread=papers.filter(p=>p.status==='unread').length;
+  const pct=total?Math.round(done/total*100):0;
+  const now=new Date(),months=[];
+  for(let i=11;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);months.push({year:d.getFullYear(),month:d.getMonth(),label:(d.getMonth()+1)+'月',count:0});}
+  papers.filter(p=>p.status==='done').forEach(p=>{const d=new Date(p.created);const m=months.find(x=>x.year===d.getFullYear()&&x.month===d.getMonth());if(m)m.count++;});
+  const maxM=Math.max(1,...months.map(m=>m.count));
+  const catMap={};papers.forEach(p=>{if(p.category)catMap[p.category]=(catMap[p.category]||0)+1;});
+  const cats=Object.entries(catMap).sort((a,b)=>b[1]-a[1]),maxC=Math.max(1,...Object.values(catMap).concat([1]));
+  const tagMap={};papers.forEach(p=>(p.tags||[]).forEach(t=>{tagMap[t]=(tagMap[t]||0)+1;}));
+  const topTags=Object.entries(tagMap).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  db.innerHTML=`
+    <div class="dash-metrics">
+      <div class="metric"><div class="metric-num">${total}</div><div class="metric-lbl">登録論文</div></div>
+      <div class="metric"><div class="metric-num">${done}</div><div class="metric-lbl">読了</div></div>
+      <div class="metric"><div class="metric-num">${reading}</div><div class="metric-lbl">読書中</div></div>
+      <div class="metric"><div class="metric-num">${pct}%</div><div class="metric-lbl">読了率</div></div>
+    </div>
+    <div class="dash-row">
+      <div class="dash-card"><h3>読了状態</h3>
+        <div class="donut-wrap"><svg width="80" height="80" viewBox="0 0 80 80">${donutPaths(done,reading,unread)}</svg>
+          <div class="legend">
+            <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div>読了 ${done}</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div>読書中 ${reading}</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--yellow)"></div>未読 ${unread}</div>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="mtabs">
-      <button class="mtab ${activeModalTab==='info'?'active':''}" onclick="switchMTab('info',${b.id})">詳細・編集</button>
-      <button class="mtab ${activeModalTab==='hl'?'active':''}" onclick="switchMTab('hl',${b.id})">メモ・ハイライト <span style="font-size:11px;color:var(--muted);">(${b.highlights.length})</span></button>
-    </div>
-    <div class="mtab-panel ${activeModalTab==='info'?'active':''}" id="mp-info">
-
-      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:1rem;">
-
-        <div>
-          <div class="fl" style="margin-bottom:5px;">ステータス</div>
-          <div style="display:flex;gap:6px;">
-            ${['want','reading','done'].map(s=>`
-              <button onclick="updateBook(${b.id},'status','${s}')"
-                style="flex:1;padding:6px 0;border-radius:var(--rs);border:1px solid ${b.status===s?'var(--border2)':'var(--border)'};
-                background:${b.status===s?(s==='reading'?'rgba(91,155,213,.2)':s==='done'?'rgba(126,200,160,.2)':'rgba(160,126,208,.2)'):'var(--surface2)'};
-                color:${b.status===s?(s==='reading'?'var(--reading)':s==='done'?'var(--done)':'var(--want)'):'var(--muted)'};
-                font-family:var(--fb);font-size:12px;font-weight:500;cursor:pointer;transition:all .18s;">
-                ${sM[s]}
-              </button>`).join('')}
-          </div>
-        </div>
-
-        ${b.status==='reading'?`
-        <div>
-          <div class="fl" style="margin-bottom:5px;">進捗 (${b.progress}%)</div>
-          <input type="range" min="0" max="100" value="${b.progress}"
-            oninput="this.previousElementSibling.textContent='進捗 (' + this.value + '%)';updateBook(${b.id},'progress',parseInt(this.value))"
-            style="width:100%;accent-color:var(--reading);">
-        </div>`:''}
-
-        <div>
-          <div class="fl" style="margin-bottom:5px;">評価</div>
-          <div style="display:flex;gap:4px;">
-            ${[1,2,3,4,5].map(n=>`
-              <button onclick="updateBook(${b.id},'rating',${n})"
-                style="font-size:20px;background:none;border:none;cursor:pointer;padding:0;color:${n<=b.rating?'var(--accent3)':'var(--surface3)'};transition:transform .1s;"
-                onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">★</button>`).join('')}
-            ${b.rating>0?`<button onclick="updateBook(${b.id},'rating',0)" style="font-size:11px;background:none;border:none;cursor:pointer;color:var(--muted);padding:0 4px;">リセット</button>`:''}
-          </div>
-        </div>
-
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-          <div>
-            <div class="fl" style="margin-bottom:5px;">開始日</div>
-            <input type="date" class="fi" value="${b.start||''}" style="font-size:13px;padding:7px 10px;color-scheme:dark;"
-              onchange="updateBook(${b.id},'start',this.value)">
-          </div>
-          <div>
-            <div class="fl" style="margin-bottom:5px;">読了日</div>
-            <input type="date" class="fi" value="${b.done||''}" style="font-size:13px;padding:7px 10px;color-scheme:dark;"
-              onchange="updateBook(${b.id},'done',this.value)">
-          </div>
-        </div>
-
-        ${b.review!==undefined?`
-        <div>
-          <div class="fl" style="margin-bottom:5px;">レビュー・メモ</div>
-          <textarea class="fta" style="min-height:60px;font-size:13px;" onchange="updateBook(${b.id},'review',this.value)">${b.review||''}</textarea>
-        </div>`:''}
-
+      <div class="dash-card"><h3>カテゴリ別</h3>
+        ${cats.slice(0,5).map(([c,n])=>`<div class="bar-row"><div class="bar-label">${esc(c)}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(n/maxC*100)}%"></div></div><div class="bar-count">${n}</div></div>`).join('')||'<div style="color:var(--text3);font-size:12px">データなし</div>'}
       </div>
-
-      <button class="delete-btn" onclick="deleteBook(${b.id})">この本を削除する</button>
     </div>
-    <div class="mtab-panel ${activeModalTab==='hl'?'active':''}" id="mp-hl">
-      ${hlHtml}
+    <div class="dash-card"><h3>月別読了数（過去12ヶ月）</h3>
+      <div class="monthly-grid">${months.map(m=>`<div class="month-col"><div class="month-bar" style="height:${Math.round(m.count/maxM*60)+3}px;background:${m.count>0?'var(--accent)':'var(--bg4)'}"></div><div class="month-lbl">${m.label}</div></div>`).join('')}</div>
     </div>
-  `;
-}
-function switchMTab(tab,id){
-  activeModalTab=tab;
-  const b=books.find(x=>x.id===id);if(b)renderModalContent(b);
-}
-function updateBook(id,field,value){
-  const b=books.find(x=>x.id===id);if(!b)return;
-  b[field]=value;
-  saveData();
-  renderModalContent(b);
-  renderBooks();
-}
-function renderHighlights(b){
-  const list=b.highlights.length
-    ?`<div class="highlight-list">${b.highlights.map(h=>`
-        <div class="hl-item">
-          <div class="hl-text">${h.text}</div>
-          ${h.page?`<div class="hl-meta">${h.page}</div>`:''}
-          <button class="hl-del" onclick="deleteHighlight(${b.id},${h.id})">✕</button>
-        </div>`).join('')}</div>`
-    :`<div style="font-size:13px;color:var(--muted2);margin-bottom:.75rem;">ハイライトはまだありません。</div>`;
-  return list+`
-    <div class="hl-add">
-      <textarea class="fta" id="hl-text-${b.id}" placeholder="印象に残った一文、メモ..."></textarea>
-      <div class="hl-add-row">
-        <input class="fi" id="hl-page-${b.id}" placeholder="ページ（例: p.42）">
-        <button class="hl-submit" onclick="addHighlight(${b.id})">追加</button>
-      </div>
+    <div class="dash-card"><h3>よく使うタグ</h3>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:4px">${topTags.map(([t,n])=>`<span style="font-size:11px;padding:3px 9px;border-radius:20px;background:var(--bg3);border:1px solid var(--border);color:var(--text2)">${esc(t)} <strong style="font-weight:600;color:var(--accent)">${n}</strong></span>`).join('')||'<span style="color:var(--text3);font-size:12px">タグなし</span>'}</div>
     </div>`;
 }
-function addHighlight(bid){
-  const b=books.find(x=>x.id===bid);if(!b)return;
-  const text=document.getElementById('hl-text-'+bid).value.trim();
-  if(!text)return;
-  const page=document.getElementById('hl-page-'+bid).value.trim();
-  b.highlights.push({id:nextHlId++,text,page});
-  saveData();
-  renderModalContent(b);
-  activeModalTab='hl';
-  renderModalContent(b);
-}
-function deleteHighlight(bid,hid){
-  const b=books.find(x=>x.id===bid);if(!b)return;
-  b.highlights=b.highlights.filter(h=>h.id!==hid);
-  saveData();
-  renderModalContent(b);
-}
-function closeModal(){document.getElementById('modal').classList.remove('open');}
-function deleteBook(id){books=books.filter(b=>b.id!==id);saveData();closeModal();renderBooks();renderTagFilter();}
-
-// ── RATING ──
-function setRating(n){
-  currentRating=n;
-  document.querySelectorAll('#star-input .star-btn').forEach((b,i)=>b.classList.toggle('active',i<n));
+function donutPaths(done,reading,unread){
+  const total=done+reading+unread;
+  if(!total)return`<circle cx="40" cy="40" r="30" fill="none" stroke="var(--bg4)" stroke-width="12"/>`;
+  const colors=['#6ee7b7','#60a5fa','#fbbf24'],vals=[done,reading,unread];
+  let paths='',start=0;
+  vals.forEach((v,i)=>{if(!v)return;const frac=v/total,angle=frac*2*Math.PI,x1=40+30*Math.sin(start),y1=40-30*Math.cos(start),x2=40+30*Math.sin(start+angle),y2=40-30*Math.cos(start+angle);paths+=`<path d="M40 40 L${x1.toFixed(2)} ${y1.toFixed(2)} A30 30 0 ${frac>0.5?1:0} 1 ${x2.toFixed(2)} ${y2.toFixed(2)} Z" fill="${colors[i]}" opacity="0.85"/>`;start+=angle;});
+  return paths+`<circle cx="40" cy="40" r="18" fill="var(--bg2)"/>`;
 }
 
-// ── SECTION ──
-function showSection(name){
-  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
-  document.getElementById('section-'+name).classList.add('active');
-  const tabs=['library','timeline','stats','add'];
-  document.querySelectorAll('.nav-tab').forEach((t,i)=>t.classList.toggle('active',tabs[i]===name));
-  if(name==='stats')renderStats();
-  if(name==='library'){renderBooks();renderTagFilter();}
-  if(name==='timeline')renderTimeline();
-}
-
-// ── ADD BOOK ──
-function addBook(){
-  const title=document.getElementById('f-title').value.trim();
-  if(!title){document.getElementById('f-title').focus();return;}
-  books.unshift({
-    id:nextId++,title,
-    author:document.getElementById('f-author').value.trim(),
-    cover:document.getElementById('f-cover').value.trim(),
-    genre:document.getElementById('f-genre').value,
-    status:document.getElementById('f-status').value,
-    pages:parseInt(document.getElementById('f-pages').value)||0,
-    price:parseInt(document.getElementById('f-price').value)||0,
-    progress:parseInt(document.getElementById('f-progress').value)||0,
-    rating:currentRating,
-    review:document.getElementById('f-review').value.trim(),
-    color:COLORS[Math.floor(Math.random()*COLORS.length)],
-    tags:[...pendingTags],
-    start:document.getElementById('f-start').value,
-    done:document.getElementById('f-done').value,
-    highlights:[],
-  });
-  ['f-title','f-author','f-cover','f-pages','f-price','f-progress','f-review','f-isbn','f-start','f-done'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('f-genre').value='小説';
-  document.getElementById('f-status').value='want';
-  document.getElementById('cprev').classList.remove('show');
-  pendingTags=[];renderPendingTags();setRating(0);
-  saveData();
-  const msg=document.getElementById('success-msg');
-  msg.style.display='block';
-  setTimeout(()=>msg.style.display='none',2500);
-}
-
-// ── SAMPLE COVERS ──
-async function loadSampleCovers(){
-  // Only fetch covers for books that don't already have one
-  const needsCover=books.filter(b=>!b.cover);
-  if(!needsCover.length)return;
-  const queries={
-    '百年の孤独':'百年の孤独','ゼロ・トゥ・ワン':'ゼロ・トゥ・ワン',
-    '嫌われる勇気':'嫌われる勇気','Clean Code':'Clean Code Robert Martin',
-    'サピエンス全史':'サピエンス全史','ノルウェイの森':'ノルウェイの森 村上春樹',
-    'アトミック・ハビット':'Atomic Habits James Clear',
-  };
-  let changed=false;
-  for(const b of needsCover){
-    const q=queries[b.title]||b.title;
-    const r=await fetchCoverUrl(q);
-    if(r&&r.cover){b.cover=r.cover;changed=true;}
-    // Wait 800ms between requests to avoid rate limiting
-    await new Promise(res=>setTimeout(res,800));
-  }
-  if(changed){saveData();renderBooks();}
-}
-
-// ── TIMELINE ──
-let tlMode='month';
-function setTLMode(m){
-  tlMode=m;
-  document.getElementById('tl-month-btn').classList.toggle('active',m==='month');
-  document.getElementById('tl-year-btn').classList.toggle('active',m==='year');
-  document.getElementById('tl-year-sel').style.display=m==='month'?'':'none';
-  renderTimeline();
-}
-
-function renderTimeline(){
-  // Build year selector
-  const years=[...new Set(books.map(b=>(b.done||b.start||'').slice(0,4)).filter(y=>y))].sort((a,b)=>b-a);
-  const sel=document.getElementById('tl-year-sel');
-  const curYear=sel.value||years[0]||new Date().getFullYear().toString();
-  sel.innerHTML=years.map(y=>`<option value="${y}" ${y===curYear?'selected':''}>${y}年</option>`).join('');
-  sel.style.display=tlMode==='month'?'':'none';
-
-  const body=document.getElementById('timeline-body');
-  const MONTH_JA=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
-
-  if(tlMode==='month'){
-    // Group by month within selected year
-    const groups={};
-    books.forEach(b=>{
-      const d=b.done||b.start;
-      if(!d||!d.startsWith(curYear))return;
-      const m=d.slice(5,7);
-      if(!groups[m])groups[m]=[];
-      groups[m].push(b);
-    });
-    const months=Object.keys(groups).sort((a,b2)=>b2-a);
-    if(!months.length){body.innerHTML=`<div class="tl-empty">${curYear}年の記録はありません。</div>`;return;}
-    body.innerHTML=months.map(m=>{
-      const list=groups[m];
-      const pages=list.reduce((s,b)=>s+(b.pages||0),0);
-      return`<div class="tl-group">
-        <div class="tl-group-header">
-          <div class="tl-group-title">${curYear}年 ${MONTH_JA[parseInt(m)-1]}</div>
-          <span class="tl-group-count">${list.length}冊 · ${pages.toLocaleString()}p</span>
-        </div>
-        <div class="tl-list">${list.map(b=>tlItem(b)).join('')}</div>
-      </div>`;
-    }).join('');
-  } else {
-    // Group by year
-    const groups={};
-    books.forEach(b=>{
-      const d=b.done||b.start;
-      if(!d)return;
-      const y=d.slice(0,4);
-      if(!groups[y])groups[y]=[];
-      groups[y].push(b);
-    });
-    const ys=Object.keys(groups).sort((a,b2)=>b2-a);
-    if(!ys.length){body.innerHTML=`<div class="tl-empty">記録がありません。本に開始日・読了日を設定してください。</div>`;return;}
-    body.innerHTML=ys.map(y=>{
-      const list=groups[y];
-      const pages=list.reduce((s,b)=>s+(b.pages||0),0);
-      return`<div class="tl-group">
-        <div class="tl-group-header">
-          <div class="tl-group-title">${y}年</div>
-          <span class="tl-group-count">${list.length}冊 · ${pages.toLocaleString()}p</span>
-        </div>
-        <div class="tl-list">${list.map(b=>tlItem(b)).join('')}</div>
-      </div>`;
-    }).join('');
-  }
-}
-
-function tlItem(b){
-  const coverHtml=b.cover
-    ?`<img class="tl-thumb" src="${b.cover}" onerror="this.style.display='none'" loading="lazy">`
-    :`<div class="tl-thumb-ph" style="background:${b.color}22;color:${b.color};">${b.title.slice(0,6)}</div>`;
-  const starsHtml=b.rating>0?`<div class="tl-stars">${[...Array(5)].map((_,i)=>`<span class="tl-star ${i<b.rating?'f':'e'}">★</span>`).join('')}</div>`:'';
-  const dateStr=b.done?`読了: ${b.done}`:(b.start?`開始: ${b.start}`:'');
-  return`<div class="tl-item" onclick="openModal(${b.id})">
-    ${coverHtml}
-    <div class="tl-info">
-      <div class="tl-title">${b.title}</div>
-      <div class="tl-author">${b.author||'著者不明'}</div>
-      <div class="tl-meta">
-        <span class="genre-badge gb-${b.genre}" style="margin-bottom:0;">${b.genre}</span>
-        ${b.pages?`<span class="tl-pages">${b.pages.toLocaleString()}p</span>`:''}
-        ${dateStr?`<span class="tl-date">${dateStr}</span>`:''}
-        ${starsHtml}
-      </div>
-    </div>
-  </div>`;
-}
-
-initData();
+launch();
 </script>
 </body>
 </html>
