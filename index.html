@@ -789,18 +789,24 @@ function addBook(){
 
 // ── SAMPLE COVERS ──
 async function loadSampleCovers(){
-  const q=[
-    {id:1,q:'百年の孤独'},{id:2,q:'ゼロ・トゥ・ワン'},
-    {id:3,q:'嫌われる勇気'},{id:4,q:'Clean Code Robert Martin'},
-    {id:5,q:'サピエンス全史'},{id:6,q:'ノルウェイの森 村上春樹'},
-    {id:7,q:'Atomic Habits James Clear'},
-  ];
-  for(const {id,q} of q){
+  // Only fetch covers for books that don't already have one
+  const needsCover=books.filter(b=>!b.cover);
+  if(!needsCover.length)return;
+  const queries={
+    '百年の孤独':'百年の孤独','ゼロ・トゥ・ワン':'ゼロ・トゥ・ワン',
+    '嫌われる勇気':'嫌われる勇気','Clean Code':'Clean Code Robert Martin',
+    'サピエンス全史':'サピエンス全史','ノルウェイの森':'ノルウェイの森 村上春樹',
+    'アトミック・ハビット':'Atomic Habits James Clear',
+  };
+  let changed=false;
+  for(const b of needsCover){
+    const q=queries[b.title]||b.title;
     const r=await fetchCoverUrl(q);
-    if(r&&r.cover){const b=books.find(x=>x.id===id);if(b)b.cover=r.cover;}
+    if(r&&r.cover){b.cover=r.cover;changed=true;}
+    // Wait 800ms between requests to avoid rate limiting
+    await new Promise(res=>setTimeout(res,800));
   }
-  saveData();
-  renderBooks();
+  if(changed){saveData();renderBooks();}
 }
 
 // ── TIMELINE ──
